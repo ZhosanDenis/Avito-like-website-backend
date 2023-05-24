@@ -1,4 +1,4 @@
-package ru.skypro.homework.dto;
+package ru.skypro.homework.dto.account;
 
 import lombok.Data;
 
@@ -6,5 +6,4 @@ import lombok.Data;
 public class LoginReq {
     private String password;
     private String username;
-
 }
