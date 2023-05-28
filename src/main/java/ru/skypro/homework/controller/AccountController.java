@@ -33,7 +33,7 @@ public class AccountController {
             tags = "Пользователи"
     )
     @PostMapping("/set_password")
-    public ResponseEntity<?> updatePassword(@RequestBody(required = false) NewPassword newPassword) {
+    public ResponseEntity<?> updatePassword(@RequestBody NewPassword newPassword) {
         return ResponseEntity.ok().build();
     }
 
@@ -69,7 +69,7 @@ public class AccountController {
             tags = "Пользователи"
     )
     @PatchMapping("/me")
-    public ResponseEntity<User> patchUserInfo(@RequestBody(required = false) User user) {
+    public ResponseEntity<User> patchUserInfo(@RequestBody User user) {
         return ResponseEntity.ok(new User());
     }
 

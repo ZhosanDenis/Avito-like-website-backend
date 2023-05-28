@@ -36,7 +36,7 @@ public class AuthController {
             tags = "Авторизация"
     )
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody(required = false) LoginReq req) {
+    public ResponseEntity<?> login(@RequestBody LoginReq req) {
         if (authService.login(req.getUsername(), req.getPassword())) {
             return ResponseEntity.ok().build();
         } else {
@@ -52,7 +52,7 @@ public class AuthController {
             tags = "Регистрация"
     )
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody(required = false) RegisterReq req) {
+    public ResponseEntity<?> register(@RequestBody RegisterReq req) {
         Role role = (req.getRole() == null) ? USER : req.getRole();
         if (authService.register(req, role)) {
             return ResponseEntity.status(HttpStatus.CREATED).build();

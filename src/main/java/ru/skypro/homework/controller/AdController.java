@@ -43,9 +43,7 @@ public class AdController {
             tags = "Объявления"
     )
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseBody
-    public ResponseEntity<Ads> addAdvertising(@ModelAttribute CreateAds properties,
-                                              @RequestParam MultipartFile image) {
+    public ResponseEntity<Ads> addAdvertising(@RequestPart CreateAds properties, @RequestPart MultipartFile image) {
         return ResponseEntity.ok(new Ads());
     }
 
@@ -169,7 +167,7 @@ public class AdController {
             tags = "Комментарии"
     )
     @PostMapping("/{id}/comments")
-    public ResponseEntity<Comment> addComment(@PathVariable long id, @RequestBody(required = false) CreateComment createComment) {
+    public ResponseEntity<Comment> addComment(@PathVariable long id, @RequestBody CreateComment createComment) {
         return ResponseEntity.ok(new Comment());
     }
 
