@@ -76,8 +76,12 @@ Authorization: Basic user@gmail.com password
 
 ###
 POST http://localhost:8080/ads
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+// Authorization: Basic user@gmail.com password
+
+--WebAppBoundary
+Content-Disposition: form-data; name="properties"
 Content-Type: application/json
-Authorization: Basic user@gmail.com password
 
 {
   "image": "123",
@@ -86,6 +90,11 @@ Authorization: Basic user@gmail.com password
   "pk": 1233,
   "title": "123"
 }
+--WebAppBoundary--
+Content-Disposition: form-data; name="image"; filename="1.jpg"
+Content-Type: image/jpeg
+
+<./1.jpg
 
 ###
 GET http://localhost:8080/ads
