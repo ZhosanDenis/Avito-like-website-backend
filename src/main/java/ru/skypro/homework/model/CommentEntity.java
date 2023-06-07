@@ -26,7 +26,7 @@ import java.util.Objects;
 public class CommentEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private int id;
 
     @Column(nullable = false)
     private String text;
@@ -38,6 +38,11 @@ public class CommentEntity {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     @ToString.Exclude
     private UserEntity userEntity;
+
+    @ManyToOne
+    @JoinColumn(name = "ad_id", referencedColumnName = "id")
+    @ToString.Exclude
+    private AdEntity adEntity;
 
     @Override
     public boolean equals(Object o) {

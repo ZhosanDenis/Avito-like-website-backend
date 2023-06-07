@@ -25,7 +25,7 @@ import java.util.Objects;
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private int id;
 
     @Column(nullable = false)
     private String email;

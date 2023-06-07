@@ -25,13 +25,13 @@ import java.util.Objects;
 public class AdEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private int id;
 
     @Column(nullable = false)
     private String description;
 
     @Column(nullable = false)
-    private double price;
+    private int price;
 
     @Column(nullable = false)
     private String title;
