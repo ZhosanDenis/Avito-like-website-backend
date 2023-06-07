@@ -3,7 +3,7 @@
 -- changeset dzhosan:1
 CREATE TABLE users
 (
-    id         BIGSERIAL PRIMARY KEY,
+    id         SERIAL PRIMARY KEY,
     email      TEXT         NOT NULL UNIQUE,
     password   BIGINT       NOT NULL,
     first_name VARCHAR(100) NOT NULL,
@@ -15,18 +15,19 @@ CREATE TABLE users
 
 CREATE TABLE ads
 (
-    id          BIGSERIAL PRIMARY KEY,
-    description TEXT             NOT NULL,
-    price       DOUBLE PRECISION NOT NULL,
-    title       TEXT             NOT NULL,
+    id          SERIAL PRIMARY KEY,
+    description TEXT    NOT NULL,
+    price       INTEGER NOT NULL,
+    title       TEXT    NOT NULL,
     image_path  VARCHAR(255),
-    user_id     BIGINT CHECK (user_id > 0) REFERENCES users (id)
+    user_id     INTEGER CHECK (user_id > 0) REFERENCES users (id)
 );
 
 CREATE TABLE comments
 (
-    id         BIGSERIAL PRIMARY KEY,
+    id         SERIAL PRIMARY KEY,
     text       TEXT      NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    user_id    BIGINT CHECK (user_id > 0) REFERENCES users (id)
+    user_id    INTEGER CHECK (user_id > 0) REFERENCES users (id),
+    ad_id      INTEGER CHECK (ad_id > 0) REFERENCES ads (id)
 );
