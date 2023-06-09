@@ -5,15 +5,8 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Id;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Column;
-import javax.persistence.ManyToOne;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
+import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -43,6 +36,9 @@ public class AdEntity {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     @ToString.Exclude
     private UserEntity userEntity;
+
+    @OneToMany(mappedBy = "adEntity")
+    private List<CommentEntity> commentEntity;
 
     @Override
     public boolean equals(Object o) {

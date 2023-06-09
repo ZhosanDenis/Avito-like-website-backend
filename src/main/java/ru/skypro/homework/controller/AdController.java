@@ -167,8 +167,10 @@ public class AdController {
             tags = "Комментарии"
     )
     @PostMapping("/{id}/comments")
-    public ResponseEntity<Comment> addComment(@PathVariable long id, @RequestBody CreateComment createComment) {
-        return ResponseEntity.ok(new Comment());
+    public ResponseEntity<Comment> addComment(
+            @PathVariable(name = "id") Integer id,
+            @RequestBody Comment comment) {
+        return ResponseEntity.ok(adService.addComment(id, comment));
     }
 
     @Operation(
@@ -185,7 +187,9 @@ public class AdController {
             tags = "Комментарии"
     )
     @GetMapping("/{id}/comments")
-    public ResponseEntity<ResponseWrapperComment> getAllComments(@PathVariable long id) {
+    public ResponseEntity<ResponseWrapperComment> getComments(
+            @PathVariable(name = "id") Integer id) {
+        adService.getComments(id);
         return ResponseEntity.ok(new ResponseWrapperComment());
     }
 
@@ -204,7 +208,11 @@ public class AdController {
             tags = "Комментарии"
     )
     @PatchMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity<Comment> updateComment(@PathVariable long adId, @PathVariable long commentId) {
+    public ResponseEntity<Comment> updateComment(
+            @PathVariable(name = "adId") Integer adId,
+            @PathVariable(name = "commentId") Integer commentId,
+            @RequestBody Comment comment) {
+        adService.updateComment(adId, commentId, comment);
         return ResponseEntity.ok(new Comment());
     }
 
@@ -218,7 +226,10 @@ public class AdController {
             tags = "Комментарии"
     )
     @DeleteMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity<?> deleteComment(@PathVariable long adId, @PathVariable long commentId) {
+    public ResponseEntity<?> deleteComment(
+            @PathVariable(name = "adId") Integer adId,
+            @PathVariable(name = "commentId") Integer commentId) {
+        adService.deleteComment(adId, commentId);
         return ResponseEntity.ok().build();
     }
 }
