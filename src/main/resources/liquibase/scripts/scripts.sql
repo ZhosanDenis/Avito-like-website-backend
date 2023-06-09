@@ -31,3 +31,10 @@ CREATE TABLE comments
     user_id    INTEGER CHECK (user_id > 0) REFERENCES users (id),
     ad_id      INTEGER CHECK (ad_id > 0) REFERENCES ads (id)
 );
+
+-- changeset dzhosan:2
+ALTER TABLE users ADD COLUMN image_media_type VARCHAR(255);
+ALTER TABLE users ADD COLUMN image_file_size  BIGINT CHECK (image_file_size > 0);
+
+ALTER TABLE ads ADD COLUMN image_media_type VARCHAR(255);
+ALTER TABLE ads ADD COLUMN image_file_size  BIGINT CHECK (image_file_size > 0);

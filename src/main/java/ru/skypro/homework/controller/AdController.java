@@ -204,7 +204,7 @@ public class AdController {
             tags = "Комментарии"
     )
     @PatchMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity<Comment> updateComment(@PathVariable long adId, @PathVariable long commentId) {
+    public ResponseEntity<Comment> updateComment(@PathVariable long adId, @PathVariable long commentId, @RequestBody Comment comment) {
         return ResponseEntity.ok(new Comment());
     }
 
