@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -39,8 +40,10 @@ public class AccountController {
     @PostMapping("/set_password")
     public ResponseEntity<?> updatePassword(@RequestBody NewPassword newPassword, Authentication authentication) {
         String userName = authentication.getName();
-        accountService.updatePassword(newPassword, userName);
-        return ResponseEntity.ok().build();
+        if (accountService.updatePassword(newPassword, userName)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @Operation(
@@ -92,9 +95,11 @@ public class AccountController {
         String userName = authentication.getName();
         if (image.getSize() > 10 * 1024 * 1024) {
             return ResponseEntity.badRequest().body("File is too big");
+        } else if (accountService.updateUserAvatar(userName, image)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        accountService.updateUserAvatar(userName, image);
-        return ResponseEntity.ok().build();
     }
 
     @GetMapping(value = "/image/{userId}/download")

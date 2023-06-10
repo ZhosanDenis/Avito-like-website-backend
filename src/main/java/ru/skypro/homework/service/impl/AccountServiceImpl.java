@@ -32,10 +32,14 @@ public class AccountServiceImpl implements AccountService {
     private String avatarsDir;
 
     @Override
-    public void updatePassword(NewPassword newPassword, String userName) {
-        UserEntity user = userRepository.findByEmail(userName);
-        user.setPassword(Objects.hash(newPassword.getNewPassword()));
-        userRepository.save(user);
+    public boolean updatePassword(NewPassword newPassword, String userName) {
+        if (userRepository.existsByEmail(userName)) {
+            UserEntity user = userRepository.findByEmail(userName);
+            user.setPassword(Objects.hash(newPassword.getNewPassword()));
+            userRepository.save(user);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -56,24 +60,19 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void updateUserAvatar(String userName, MultipartFile image) throws IOException {
-        UserEntity user = userRepository.findByEmail(userName);
-        Path filePath = Path.of(avatarsDir, user.getId() + "."
-                + getExtensions(Objects.requireNonNull(image.getOriginalFilename())));
-        Files.createDirectories(filePath.getParent());
-        Files.deleteIfExists(filePath);
-
-        try (InputStream is = image.getInputStream();
-             OutputStream os = Files.newOutputStream(filePath, CREATE_NEW);
-             BufferedInputStream bis = new BufferedInputStream(is, 1024);
-             BufferedOutputStream bos = new BufferedOutputStream(os, 1024)
-        ) {
-            bis.transferTo(bos);
+    public boolean updateUserAvatar(String userName, MultipartFile image) throws IOException {
+        if (userRepository.existsByEmail(userName)) {
+            UserEntity user = userRepository.findByEmail(userName);
+            Path filePath = Path.of(avatarsDir, user.getId() + "."
+                    + getExtensions(Objects.requireNonNull(image.getOriginalFilename())));
+            uploadImage(image, filePath);
+            user.setImagePath(filePath.getParent().toString());
+            user.setImageMediaType(image.getContentType());
+            user.setImageFileSize(image.getSize());
+            userRepository.save(user);
+            return true;
         }
-        user.setImagePath(filePath.getParent().toString());
-        user.setImageMediaType(image.getContentType());
-        user.setImageFileSize(image.getSize());
-        userRepository.save(user);
+        return false;
     }
 
     @Override
@@ -94,5 +93,18 @@ public class AccountServiceImpl implements AccountService {
 
     private String getExtensions(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1);
+    }
+
+    static void uploadImage(MultipartFile image, Path filePath) throws IOException {
+        Files.createDirectories(filePath.getParent());
+        Files.deleteIfExists(filePath);
+
+        try (InputStream is = image.getInputStream();
+             OutputStream os = Files.newOutputStream(filePath, CREATE_NEW);
+             BufferedInputStream bis = new BufferedInputStream(is, 1024);
+             BufferedOutputStream bos = new BufferedOutputStream(os, 1024)
+        ) {
+            bis.transferTo(bos);
+        }
     }
 }

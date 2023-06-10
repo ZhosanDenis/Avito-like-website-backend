@@ -10,13 +10,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public interface AccountService {
-    void updatePassword(NewPassword newPassword, String userName);
+    boolean updatePassword(NewPassword newPassword, String userName);
 
     User getUserInfo(Authentication authentication);
 
     User patchUserInfo(User user, Authentication authentication);
 
-    void updateUserAvatar(String userName, MultipartFile image) throws IOException;
+    boolean updateUserAvatar(String userName, MultipartFile image) throws IOException;
 
     void downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException;
 }
