@@ -69,14 +69,14 @@ public class AdServiceImpl implements AdService {
     @Override
     public void deleteComment(Integer adId, Integer commentId) {
         commentRepository.delete(commentRepository
-                .findCommentEntityByIdAndAdEntity_Id(commentId, adId));
+                .findByIdAndAdEntity_Id(commentId, adId));
     }
 
     @Override
     public Comment updateComment(Integer adId, Integer commentId, Comment comment) {
         return responseWrapperCommentMapper.toCommentDto(
                 responseWrapperCommentMapper.toCommentEntity(
-                        comment, commentRepository.findByIdAndAdEntity_Id(adId, commentId))
+                        comment, commentRepository.findByIdAndAdEntity_Id(commentId, adId))
         );
     }
 
