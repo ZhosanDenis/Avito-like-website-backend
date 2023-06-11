@@ -43,13 +43,6 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @OneToMany(mappedBy = "userEntity")
-    private List<AdEntity> adEntities;
-
-    @OneToMany(mappedBy = "userEntity")
-    private List<CommentEntity> commentEntities;
-
-
     @Override
     public boolean equals(Object o) {
 

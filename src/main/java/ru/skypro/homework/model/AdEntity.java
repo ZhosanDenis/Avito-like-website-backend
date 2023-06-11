@@ -37,9 +37,6 @@ public class AdEntity {
     @ToString.Exclude
     private UserEntity userEntity;
 
-    @OneToMany(mappedBy = "adEntity")
-    private List<CommentEntity> commentEntity;
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

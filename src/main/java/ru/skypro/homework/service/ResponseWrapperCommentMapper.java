@@ -1,19 +1,19 @@
 package ru.skypro.homework.service;
 
 import ru.skypro.homework.dto.comment.Comment;
+import ru.skypro.homework.dto.comment.CreateComment;
 import ru.skypro.homework.dto.comment.ResponseWrapperComment;
-import ru.skypro.homework.model.AdEntity;
 import ru.skypro.homework.model.CommentEntity;
-import ru.skypro.homework.model.UserEntity;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface ResponseWrapperCommentMapper {
 
-    ResponseWrapperComment toResponseWrapperCommentDto(List<Comment> comments);
+    CommentEntity toCommentEntity(CreateComment createComment);
+
+    ResponseWrapperComment toResponseWrapperCommentDto(List<CommentEntity> comments);
 
     Comment toCommentDto(CommentEntity commentEntity);
 
-    CommentEntity toCommentEntity(Integer id, Comment comment);
+    CommentEntity toCommentEntity(Comment comment, CommentEntity commentEntity);
 }
