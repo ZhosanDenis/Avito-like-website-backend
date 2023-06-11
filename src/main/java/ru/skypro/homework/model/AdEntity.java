@@ -30,7 +30,13 @@ public class AdEntity {
     private String title;
 
     @Column(name = "image_path")
-    private String image;
+    private String imagePath;
+
+    @Column(name = "image_media_type")
+    private String imageMediaType;
+
+    @Column(name = "image_file_size")
+    private long imageFileSize;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
