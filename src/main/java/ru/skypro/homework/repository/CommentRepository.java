@@ -9,7 +9,5 @@ public interface CommentRepository extends JpaRepository<CommentEntity, Integer>
 
     List<CommentEntity> findCommentEntitiesByAdEntity_Id(Integer id);
 
-    CommentEntity findCommentEntityByIdAndAdEntity_Id(Integer commentId, Integer adId);
-
-    CommentEntity findByIdAndAdEntity_Id(int adId, int commentId);
+    CommentEntity findByIdAndAdEntity_Id(int commentId, int adId);
 }
