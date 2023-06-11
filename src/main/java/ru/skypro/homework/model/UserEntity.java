@@ -43,7 +43,13 @@ public class UserEntity {
     private String phone;
 
     @Column(name = "image_path")
-    private String image;
+    private String imagePath;
+
+    @Column(name = "image_media_type")
+    private String imageMediaType;
+
+    @Column(name = "image_file_size")
+    private long imageFileSize;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
