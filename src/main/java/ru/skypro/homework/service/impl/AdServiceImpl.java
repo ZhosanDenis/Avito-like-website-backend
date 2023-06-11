@@ -16,6 +16,7 @@ import ru.skypro.homework.model.UserEntity;
 import ru.skypro.homework.repository.AdRepository;
 import ru.skypro.homework.repository.CommentRepository;
 import ru.skypro.homework.repository.UserRepository;
+import ru.skypro.homework.service.AdMapper;
 import ru.skypro.homework.service.AdService;
 import ru.skypro.homework.service.ResponseWrapperCommentMapper;
 
@@ -82,7 +83,7 @@ public class AdServiceImpl implements AdService {
     @Override
     public Ads addAdvertising(CreateAds createAds, MultipartFile image, String userName) throws IOException {
         UserEntity user = userRepository.findByEmail(userName);
-        AdEntity adEntity = adMapper.toAdEntity(new AdEntity(), createAds);
+        AdEntity adEntity = adMapper.toAdEntity(createAds, new AdEntity());
         Path filePath = createPath(image, adEntity);
         adEntity.setUserEntity(user);
         adEntity.setImagePath(filePath.getParent().toString());
@@ -94,7 +95,7 @@ public class AdServiceImpl implements AdService {
 
     @Override
     public FullAds getAdvertising(int id, String userName) {
-        if (adRepository.existsByUserEmail(userName)) {
+        if (adRepository.existsByUserEntityEmail(userName)) {
             AdEntity adEntity = adRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
             return adMapper.toFullAds(adEntity);
@@ -110,8 +111,8 @@ public class AdServiceImpl implements AdService {
 
     @Override
     public ResponseWrapperAds getAllMyAdvertising(String userName) {
-        if (adRepository.existsByUserEmail(userName)) {
-            List<AdEntity> entityList = adRepository.findAllByUserEmail(userName);
+        if (adRepository.existsByUserEntityEmail(userName)) {
+            List<AdEntity> entityList = adRepository.findAllByUserEntityEmail(userName);
             return adMapper.toResponseWrapperAds(entityList);
         }
         throw new IllegalArgumentException("Пользователя не существует");
@@ -119,12 +120,12 @@ public class AdServiceImpl implements AdService {
 
     @Override
     public Ads updateAdvertising(int id, CreateAds createAds, String userName) {
-        if (adRepository.existsByUserEmail(userName)) {
+        if (adRepository.existsByUserEntityEmail(userName)) {
             AdEntity adEntity = adRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
             return adMapper.toAds(
                     adRepository.save(
-                            adMapper.toAdEntity(adEntity, createAds)
+                            adMapper.toAdEntity(createAds, adEntity)
                     )
             );
         }
@@ -133,7 +134,7 @@ public class AdServiceImpl implements AdService {
 
     @Override
     public boolean updateAdvertisingImage(int id, MultipartFile image, String userName) throws IOException {
-        if (adRepository.existsByUserEmail(userName)) {
+        if (adRepository.existsByUserEntityEmail(userName)) {
             AdEntity adEntity = adRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
             Path filePath = createPath(image, adEntity);
@@ -148,7 +149,7 @@ public class AdServiceImpl implements AdService {
 
     @Override
     public boolean deleteAdvertising(int id, String userName) {
-        if (adRepository.existsByUserEmail(userName)) {
+        if (adRepository.existsByUserEntityEmail(userName)) {
             adRepository.deleteById(id);
             return true;
         }
