@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.ads.Ads;
@@ -19,6 +20,8 @@ import ru.skypro.homework.dto.comment.Comment;
 import ru.skypro.homework.dto.comment.CreateComment;
 import ru.skypro.homework.dto.comment.ResponseWrapperComment;
 import ru.skypro.homework.service.AdService;
+
+import java.io.IOException;
 
 @Slf4j
 @CrossOrigin(value = "http://localhost:3000")
@@ -43,8 +46,11 @@ public class AdController {
             tags = "Объявления"
     )
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Ads> addAdvertising(@RequestPart CreateAds properties, @RequestPart MultipartFile image) {
-        return ResponseEntity.ok(new Ads());
+    public ResponseEntity<Ads> addAdvertising(@RequestPart CreateAds properties,
+                                              @RequestPart MultipartFile image,
+                                              Authentication authentication) throws IOException {
+        String userName = authentication.getName();
+        return ResponseEntity.ok(adService.addAdvertising(properties, image, userName));
     }
 
     @Operation(
@@ -61,8 +67,10 @@ public class AdController {
             tags = "Объявления"
     )
     @GetMapping("/{id}")
-    public ResponseEntity<FullAds> getAdvertising(@PathVariable long id) {
-        return ResponseEntity.ok(new FullAds());
+    public ResponseEntity<FullAds> getAdvertising(@PathVariable int id,
+                                                  Authentication authentication) {
+        String userName = authentication.getName();
+        return ResponseEntity.ok(adService.getAdvertising(id, userName));
     }
 
     @Operation(
@@ -79,7 +87,7 @@ public class AdController {
     )
     @GetMapping
     public ResponseEntity<ResponseWrapperAds> getAllAdvertising() {
-        return ResponseEntity.ok(new ResponseWrapperAds());
+        return ResponseEntity.ok(adService.getAllAdvertising());
     }
 
     @Operation(
@@ -96,8 +104,9 @@ public class AdController {
             tags = "Объявления"
     )
     @GetMapping("/me")
-    public ResponseEntity<ResponseWrapperAds> getAllMyAdvertising() {
-        return ResponseEntity.ok(new ResponseWrapperAds());
+    public ResponseEntity<ResponseWrapperAds> getAllMyAdvertising(Authentication authentication) {
+        String userName = authentication.getName();
+        return ResponseEntity.ok(adService.getAllMyAdvertising(userName));
     }
 
     @Operation(
@@ -115,8 +124,11 @@ public class AdController {
             tags = "Объявления"
     )
     @PatchMapping("/{id}")
-    public ResponseEntity<Ads> updateAdvertising(@PathVariable long id, @RequestBody CreateAds createAds) {
-        return ResponseEntity.ok(new Ads());
+    public ResponseEntity<Ads> updateAdvertising(@PathVariable int id,
+                                                 @RequestBody CreateAds createAds,
+                                                 Authentication authentication) {
+        String userName = authentication.getName();
+        return ResponseEntity.ok(adService.updateAdvertising(id, createAds, userName));
     }
 
     @Operation(
@@ -134,7 +146,11 @@ public class AdController {
             tags = "Объявления"
     )
     @PatchMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateAdvertisingImage(@PathVariable long id, @RequestParam MultipartFile image) {
+    public ResponseEntity<?> updateAdvertisingImage(@PathVariable int id,
+                                                    @RequestParam MultipartFile image,
+                                                    Authentication authentication) throws IOException {
+        String userName = authentication.getName();
+        adService.updateAdvertisingImage(id, image, userName);
         return ResponseEntity.ok().build();
     }
 
@@ -149,7 +165,10 @@ public class AdController {
             tags = "Объявления"
     )
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAdvertising(@PathVariable long id) {
+    public ResponseEntity<?> deleteAdvertising(@PathVariable int id,
+                                               Authentication authentication) {
+        String userName = authentication.getName();
+        adService.deleteAdvertising(id, userName);
         return ResponseEntity.ok().build();
     }
 
@@ -167,8 +186,12 @@ public class AdController {
             tags = "Комментарии"
     )
     @PostMapping("/{id}/comments")
-    public ResponseEntity<Comment> addComment(@PathVariable long id, @RequestBody CreateComment createComment) {
-        return ResponseEntity.ok(new Comment());
+    public ResponseEntity<Comment> addComment(
+            @PathVariable(name = "id") Integer id,
+            @RequestBody CreateComment createComment,
+            Authentication authentication) {
+        String userName = authentication.getName();
+        return ResponseEntity.ok(adService.addComment(id, createComment, userName));
     }
 
     @Operation(
@@ -185,8 +208,9 @@ public class AdController {
             tags = "Комментарии"
     )
     @GetMapping("/{id}/comments")
-    public ResponseEntity<ResponseWrapperComment> getAllComments(@PathVariable long id) {
-        return ResponseEntity.ok(new ResponseWrapperComment());
+    public ResponseEntity<ResponseWrapperComment> getComments(
+            @PathVariable(name = "id") Integer id) {
+        return ResponseEntity.ok(adService.getComments(id));
     }
 
     @Operation(
@@ -204,8 +228,11 @@ public class AdController {
             tags = "Комментарии"
     )
     @PatchMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity<Comment> updateComment(@PathVariable long adId, @PathVariable long commentId) {
-        return ResponseEntity.ok(new Comment());
+    public ResponseEntity<Comment> updateComment(
+            @PathVariable(name = "adId") Integer adId,
+            @PathVariable(name = "commentId") Integer commentId,
+            @RequestBody Comment comment) {
+        return ResponseEntity.ok(adService.updateComment(adId, commentId, comment));
     }
 
     @Operation(
@@ -218,7 +245,10 @@ public class AdController {
             tags = "Комментарии"
     )
     @DeleteMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity<?> deleteComment(@PathVariable long adId, @PathVariable long commentId) {
+    public ResponseEntity<?> deleteComment(
+            @PathVariable(name = "adId") Integer adId,
+            @PathVariable(name = "commentId") Integer commentId) {
+        adService.deleteComment(adId, commentId);
         return ResponseEntity.ok().build();
     }
 }
