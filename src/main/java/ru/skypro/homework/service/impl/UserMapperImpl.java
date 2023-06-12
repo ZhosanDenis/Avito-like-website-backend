@@ -39,7 +39,7 @@ public class UserMapperImpl implements UserMapper {
         user.setFirstName(userEntity.getFirstName());
         user.setLastName(userEntity.getLastName());
         user.setPhone(userEntity.getPhone());
-        user.setImage("users/image/" + userEntity.getId() + "/download");
+        user.setImage("/users/image/" + userEntity.getId() + "/download");
         return user;
     }
 }

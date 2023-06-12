@@ -2,6 +2,7 @@ package ru.skypro.homework.service.impl;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.ads.Ads;
 import ru.skypro.homework.dto.ads.CreateAds;
@@ -23,7 +24,6 @@ import ru.skypro.homework.service.ResponseWrapperCommentMapper;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class AdServiceImpl implements AdService {
@@ -158,12 +158,8 @@ public class AdServiceImpl implements AdService {
 
     private Path createPath(MultipartFile image, AdEntity adEntity) throws IOException {
         Path filePath = Path.of(adsImageDir, "Объявление_" + adEntity.getId() + "."
-                + getExtensions(Objects.requireNonNull(image.getOriginalFilename())));
+                + StringUtils.getFilenameExtension(image.getOriginalFilename()));
         AccountServiceImpl.uploadImage(image, filePath);
         return filePath;
-    }
-
-    private String getExtensions(String fileName) {
-        return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 }

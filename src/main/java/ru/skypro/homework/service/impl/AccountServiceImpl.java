@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.account.NewPassword;
 import ru.skypro.homework.dto.account.User;
@@ -33,9 +34,10 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public boolean updatePassword(NewPassword newPassword, String userName) {
-        if (userRepository.existsByEmail(userName)) {
+        if (userRepository.existsByEmail(userName) &&
+                userRepository.existsByPassword(Objects.hash(userName, newPassword.getCurrentPassword()))) {
             UserEntity user = userRepository.findByEmail(userName);
-            user.setPassword(Objects.hash(newPassword.getNewPassword()));
+            user.setPassword(Objects.hash(userName, newPassword.getNewPassword()));
             userRepository.save(user);
             return true;
         }
@@ -64,7 +66,7 @@ public class AccountServiceImpl implements AccountService {
         if (userRepository.existsByEmail(userName)) {
             UserEntity user = userRepository.findByEmail(userName);
             Path filePath = Path.of(avatarsDir, user.getId() + "."
-                    + getExtensions(Objects.requireNonNull(image.getOriginalFilename())));
+                    + StringUtils.getFilenameExtension(image.getOriginalFilename()));
             uploadImage(image, filePath);
             user.setImagePath(filePath.getParent().toString());
             user.setImageMediaType(image.getContentType());
@@ -89,10 +91,6 @@ public class AccountServiceImpl implements AccountService {
             response.setContentLength((int) user.getImageFileSize());
             is.transferTo(os);
         }
-    }
-
-    private String getExtensions(String fileName) {
-        return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 
     static void uploadImage(MultipartFile image, Path filePath) throws IOException {
