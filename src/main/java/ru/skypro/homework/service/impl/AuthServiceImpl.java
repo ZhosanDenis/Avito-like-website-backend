@@ -38,9 +38,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public boolean login(String userName, String password) {
-        boolean userExists = userRepository.existsByEmail(userName);
         boolean passwordMatches = userRepository.existsByPassword(Objects.hash(userName, password));
-        if (!manager.userExists(userName) && !userExists) {
+        if (!manager.userExists(userName)) {
             LOGGER.warn("User does not exist");
             return false;
         }
@@ -51,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public boolean register(RegisterReq registerReq, Role role) {
-        if (manager.userExists(registerReq.getUsername()) || userRepository.existsByEmail(registerReq.getUsername())) {
+        if (manager.userExists(registerReq.getUsername())) {
             return false;
         }
         manager.createUser(
