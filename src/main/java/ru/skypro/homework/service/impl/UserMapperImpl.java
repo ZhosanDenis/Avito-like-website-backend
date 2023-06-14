@@ -1,5 +1,6 @@
 package ru.skypro.homework.service.impl;
 
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import ru.skypro.homework.dto.account.RegisterReq;
 import ru.skypro.homework.dto.account.User;
@@ -19,6 +20,9 @@ public class UserMapperImpl implements UserMapper {
         userEntity.setLastName(req.getLastName());
         userEntity.setPhone(req.getPhone());
         userEntity.setRole(req.getRole());
+        userEntity.setImagePath("placeholder");
+        userEntity.setImageFileSize(1);
+        userEntity.setImageMediaType(MediaType.IMAGE_JPEG_VALUE);
         return userEntity;
     }
 
