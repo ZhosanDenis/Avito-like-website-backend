@@ -39,14 +39,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public boolean login(String userName, String password) {
-//        boolean passwordMatches = userRepository.existsByPassword(Objects.hash(userName, password));
+        boolean passwordMatches = userRepository.existsByPassword(Objects.hash(userName, password));
         if (!manager.userExists(userName)) {
             LOGGER.warn("User does not exist");
             return false;
         }
-        UserDetails userDetails = manager.loadUserByUsername(userName);
+//        UserDetails userDetails = manager.loadUserByUsername(userName);
         LOGGER.info("User " + userName + " logged in");
-        return encoder.matches(password, userDetails.getPassword()) /*|| passwordMatches*/;
+        return /*encoder.matches(password, userDetails.getPassword()) ||*/ passwordMatches;
     }
 
     @Override
