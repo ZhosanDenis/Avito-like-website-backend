@@ -2,6 +2,7 @@ package ru.skypro.homework.service.impl;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.ads.Ads;
@@ -49,6 +50,7 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseWrapperComment getComments(Integer id) {
         List<CommentEntity> commentEntities = commentRepository
                 .findCommentEntitiesByAdEntity_Id(id);
@@ -56,10 +58,11 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
+    @Transactional
     public Comment addComment(Integer id, CreateComment createComment, String userName) {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
-        CommentEntity commentEntity = responseWrapperCommentMapper.toCommentEntity(createComment);
+        CommentEntity commentEntity = responseWrapperCommentMapper.toCommentEntity(createComment, new CommentEntity());
         UserEntity userEntity = userRepository.findByEmail(userName);
         commentEntity.setUserEntity(userEntity);
         commentEntity.setAdEntity(adEntity);
@@ -67,23 +70,29 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
+    @Transactional
     public void deleteComment(Integer adId, Integer commentId) {
         commentRepository.delete(commentRepository
                 .findByIdAndAdEntity_Id(commentId, adId));
     }
 
     @Override
-    public Comment updateComment(Integer adId, Integer commentId, Comment comment) {
+    @Transactional
+    public Comment updateComment(Integer adId, Integer commentId, CreateComment createComment) {
+        CommentEntity commentEntity = commentRepository.findByIdAndAdEntity_Id(commentId, adId);
         return responseWrapperCommentMapper.toCommentDto(
-                responseWrapperCommentMapper.toCommentEntity(
-                        comment, commentRepository.findByIdAndAdEntity_Id(commentId, adId))
+                commentRepository.save(
+                        responseWrapperCommentMapper.toCommentEntity(
+                                createComment, commentEntity)
+                )
         );
     }
 
     @Override
+    @Transactional
     public Ads addAdvertising(CreateAds createAds, MultipartFile image, String userName) throws IOException {
         UserEntity user = userRepository.findByEmail(userName);
-        AdEntity adEntity = adMapper.toAdEntity(createAds, new AdEntity());
+        AdEntity adEntity = adRepository.save(adMapper.toAdEntity(createAds, new AdEntity()));
         Path filePath = createPath(image, adEntity);
         adEntity.setUserEntity(user);
         adEntity.setImagePath(filePath.getParent().toString());
@@ -94,26 +103,30 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
-    public FullAds getAdvertising(int id, String userName) {
+    @Transactional(readOnly = true)
+    public FullAds getAdvertising(int id) {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         return adMapper.toFullAds(adEntity);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseWrapperAds getAllAdvertising() {
         List<AdEntity> entityList = adRepository.findAll();
         return adMapper.toResponseWrapperAds(entityList);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseWrapperAds getAllMyAdvertising(String userName) {
         List<AdEntity> entityList = adRepository.findAllByUserEntityEmail(userName);
         return adMapper.toResponseWrapperAds(entityList);
     }
 
     @Override
-    public Ads updateAdvertising(int id, CreateAds createAds, String userName) {
+    @Transactional
+    public Ads updateAdvertising(int id, CreateAds createAds) {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         return adMapper.toAds(
@@ -124,7 +137,8 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
-    public boolean updateAdvertisingImage(int id, MultipartFile image, String userName) throws IOException {
+    @Transactional
+    public boolean updateAdvertisingImage(int id, MultipartFile image) throws IOException {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         Path filePath = createPath(image, adEntity);
@@ -136,9 +150,18 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
-    public boolean deleteAdvertising(int id, String userName) {
+    @Transactional
+    public boolean deleteAdvertising(int id) {
+        commentRepository.deleteAllByAdEntity_Id(id);
         adRepository.deleteById(id);
         return true;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseWrapperAds findByTitle(String title) {
+        return adMapper.toResponseWrapperAds(
+                adRepository.findAllByTitleLike(title));
     }
 
     private Path createPath(MultipartFile image, AdEntity adEntity) throws IOException {

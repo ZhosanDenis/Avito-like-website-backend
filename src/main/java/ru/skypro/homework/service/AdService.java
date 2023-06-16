@@ -18,19 +18,21 @@ public interface AdService {
 
     void deleteComment(Integer adId, Integer commentId);
 
-    Comment updateComment(Integer adId, Integer commentId, Comment comment);
+    Comment updateComment(Integer adId, Integer commentId, CreateComment createComment);
 
     Ads addAdvertising(CreateAds createAds, MultipartFile image, String userName) throws IOException;
 
-    FullAds getAdvertising(int id, String userName);
+    FullAds getAdvertising(int id);
 
     ResponseWrapperAds getAllAdvertising();
 
     ResponseWrapperAds getAllMyAdvertising(String userName);
 
-    Ads updateAdvertising(int id, CreateAds createAds, String userName);
+    Ads updateAdvertising(int id, CreateAds createAds);
 
-    boolean updateAdvertisingImage(int id, MultipartFile image, String userName) throws IOException;
+    boolean updateAdvertisingImage(int id, MultipartFile image) throws IOException;
 
-    boolean deleteAdvertising(int id, String userName);
+    boolean deleteAdvertising(int id);
+
+    ResponseWrapperAds findByTitle(String title);
 }

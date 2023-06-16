@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.account.NewPassword;
@@ -33,6 +34,7 @@ public class AccountServiceImpl implements AccountService {
     private String avatarsDir;
 
     @Override
+    @Transactional
     public boolean updatePassword(NewPassword newPassword, String userName) {
         if (userRepository.existsByPassword(Math.abs(Objects.hash(userName, newPassword.getCurrentPassword())))) {
             UserEntity user = userRepository.findByEmail(userName);
@@ -44,6 +46,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public User getUserInfo(Authentication authentication) {
         return userMapper.toUser(
                 userRepository.findByEmail(authentication.getName())
@@ -51,6 +54,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public User patchUserInfo(User user, Authentication authentication) {
         UserEntity userEntity = userRepository.findByEmail(authentication.getName());
         return userMapper.toUser(
@@ -61,6 +65,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public boolean updateUserAvatar(String userName, MultipartFile image) throws IOException {
         UserEntity user = userRepository.findByEmail(userName);
         Path filePath = Path.of(avatarsDir, user.getId() + "."
@@ -74,6 +79,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public void downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));

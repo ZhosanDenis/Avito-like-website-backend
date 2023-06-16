@@ -9,11 +9,9 @@ import java.util.List;
 
 public interface ResponseWrapperCommentMapper {
 
-    CommentEntity toCommentEntity(CreateComment createComment);
+    CommentEntity toCommentEntity(CreateComment createComment, CommentEntity commentEntity);
 
     ResponseWrapperComment toResponseWrapperCommentDto(List<CommentEntity> comments);
 
     Comment toCommentDto(CommentEntity commentEntity);
-
-    CommentEntity toCommentEntity(Comment comment, CommentEntity commentEntity);
 }
