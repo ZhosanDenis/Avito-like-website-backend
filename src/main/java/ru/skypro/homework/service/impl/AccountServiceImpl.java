@@ -34,10 +34,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public boolean updatePassword(NewPassword newPassword, String userName) {
-        if (userRepository.existsByEmail(userName) &&
-                userRepository.existsByPassword(Objects.hash(userName, newPassword.getCurrentPassword()))) {
+        if (userRepository.existsByPassword(Math.abs(Objects.hash(userName, newPassword.getCurrentPassword())))) {
             UserEntity user = userRepository.findByEmail(userName);
-            user.setPassword(Objects.hash(userName, newPassword.getNewPassword()));
+            user.setPassword(Math.abs(Objects.hash(userName, newPassword.getNewPassword())));
             userRepository.save(user);
             return true;
         }
@@ -63,18 +62,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public boolean updateUserAvatar(String userName, MultipartFile image) throws IOException {
-        if (userRepository.existsByEmail(userName)) {
-            UserEntity user = userRepository.findByEmail(userName);
-            Path filePath = Path.of(avatarsDir, user.getId() + "."
-                    + StringUtils.getFilenameExtension(image.getOriginalFilename()));
-            uploadImage(image, filePath);
-            user.setImagePath(filePath.getParent().toString());
-            user.setImageMediaType(image.getContentType());
-            user.setImageFileSize(image.getSize());
-            userRepository.save(user);
-            return true;
-        }
-        return false;
+        UserEntity user = userRepository.findByEmail(userName);
+        Path filePath = Path.of(avatarsDir, user.getId() + "."
+                + StringUtils.getFilenameExtension(image.getOriginalFilename()));
+        uploadImage(image, filePath);
+        user.setImagePath(filePath.getParent().toString());
+        user.setImageMediaType(image.getContentType());
+        user.setImageFileSize(image.getSize());
+        userRepository.save(user);
+        return true;
     }
 
     @Override

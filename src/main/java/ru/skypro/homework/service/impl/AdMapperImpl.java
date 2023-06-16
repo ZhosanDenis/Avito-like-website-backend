@@ -16,9 +16,9 @@ public class AdMapperImpl implements AdMapper {
 
     @Override
     public AdEntity toAdEntity(CreateAds ads, AdEntity ad) {
-        ad.setDescription(ad.getDescription());
-        ad.setPrice(ad.getPrice());
-        ad.setTitle(ad.getTitle());
+        ad.setDescription(ads.getDescription());
+        ad.setPrice(ads.getPrice());
+        ad.setTitle(ads.getTitle());
         return ad;
     }
 

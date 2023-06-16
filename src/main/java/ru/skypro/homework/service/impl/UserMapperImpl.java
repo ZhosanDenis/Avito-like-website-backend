@@ -14,7 +14,7 @@ public class UserMapperImpl implements UserMapper {
     public UserEntity toUserEntity(RegisterReq req) {
         UserEntity userEntity = new UserEntity();
         userEntity.setEmail(req.getUsername());
-        userEntity.setPassword(Objects.hash(req.getUsername(), req.getPassword()));
+        userEntity.setPassword(Math.abs(Objects.hash(req.getUsername(), req.getPassword())));
         userEntity.setFirstName(req.getFirstName());
         userEntity.setLastName(req.getLastName());
         userEntity.setPhone(req.getPhone());

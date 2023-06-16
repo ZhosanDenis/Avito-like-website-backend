@@ -11,7 +11,6 @@ import ru.skypro.homework.service.ResponseWrapperCommentMapper;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,7 +43,9 @@ public class ResponseWrapperCommentMapperImpl implements ResponseWrapperCommentM
         comment.setAuthorImage("/users/image/" + commentEntity.getUserEntity().getId() + "/download");
         comment.setAuthorFirstName(commentEntity.getUserEntity().getFirstName());
         comment.setCreatedAt(commentEntity.getCreatedAt()
-                .toInstant(ZoneOffset.UTC).toEpochMilli());
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli());
         comment.setPk(commentEntity.getId());
         comment.setText(commentEntity.getText());
         return comment;
