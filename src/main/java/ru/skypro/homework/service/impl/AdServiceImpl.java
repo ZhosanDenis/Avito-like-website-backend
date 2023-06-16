@@ -95,12 +95,9 @@ public class AdServiceImpl implements AdService {
 
     @Override
     public FullAds getAdvertising(int id, String userName) {
-        if (adRepository.existsByUserEntityEmail(userName)) {
-            AdEntity adEntity = adRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
-            return adMapper.toFullAds(adEntity);
-        }
-        throw new IllegalArgumentException("Пользователя не существует");
+        AdEntity adEntity = adRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
+        return adMapper.toFullAds(adEntity);
     }
 
     @Override
@@ -111,49 +108,37 @@ public class AdServiceImpl implements AdService {
 
     @Override
     public ResponseWrapperAds getAllMyAdvertising(String userName) {
-        if (adRepository.existsByUserEntityEmail(userName)) {
-            List<AdEntity> entityList = adRepository.findAllByUserEntityEmail(userName);
-            return adMapper.toResponseWrapperAds(entityList);
-        }
-        throw new IllegalArgumentException("Пользователя не существует");
+        List<AdEntity> entityList = adRepository.findAllByUserEntityEmail(userName);
+        return adMapper.toResponseWrapperAds(entityList);
     }
 
     @Override
     public Ads updateAdvertising(int id, CreateAds createAds, String userName) {
-        if (adRepository.existsByUserEntityEmail(userName)) {
-            AdEntity adEntity = adRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
-            return adMapper.toAds(
-                    adRepository.save(
-                            adMapper.toAdEntity(createAds, adEntity)
-                    )
-            );
-        }
-        throw new IllegalArgumentException("Пользователя не существует");
+        AdEntity adEntity = adRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
+        return adMapper.toAds(
+                adRepository.save(
+                        adMapper.toAdEntity(createAds, adEntity)
+                )
+        );
     }
 
     @Override
     public boolean updateAdvertisingImage(int id, MultipartFile image, String userName) throws IOException {
-        if (adRepository.existsByUserEntityEmail(userName)) {
-            AdEntity adEntity = adRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
-            Path filePath = createPath(image, adEntity);
-            adEntity.setImagePath(filePath.getParent().toString());
-            adEntity.setImageMediaType(image.getContentType());
-            adEntity.setImageFileSize(image.getSize());
-            adRepository.save(adEntity);
-            return true;
-        }
-        return false;
+        AdEntity adEntity = adRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
+        Path filePath = createPath(image, adEntity);
+        adEntity.setImagePath(filePath.getParent().toString());
+        adEntity.setImageMediaType(image.getContentType());
+        adEntity.setImageFileSize(image.getSize());
+        adRepository.save(adEntity);
+        return true;
     }
 
     @Override
     public boolean deleteAdvertising(int id, String userName) {
-        if (adRepository.existsByUserEntityEmail(userName)) {
-            adRepository.deleteById(id);
-            return true;
-        }
-        return false;
+        adRepository.deleteById(id);
+        return true;
     }
 
     private Path createPath(MultipartFile image, AdEntity adEntity) throws IOException {

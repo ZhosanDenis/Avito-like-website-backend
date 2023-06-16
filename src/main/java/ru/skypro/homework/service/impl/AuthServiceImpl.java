@@ -13,8 +13,6 @@ import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.service.AuthService;
 import ru.skypro.homework.service.UserMapper;
 
-import java.util.Objects;
-
 @Service
 public class AuthServiceImpl implements AuthService {
     private final static Logger LOGGER = LoggerFactory.getLogger(AuthServiceImpl.class);
@@ -39,14 +37,13 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public boolean login(String userName, String password) {
-        boolean passwordMatches = userRepository.existsByPassword(Objects.hash(userName, password));
         if (!manager.userExists(userName)) {
             LOGGER.warn("User does not exist");
             return false;
         }
-//        UserDetails userDetails = manager.loadUserByUsername(userName);
+        UserDetails userDetails = manager.loadUserByUsername(userName);
         LOGGER.info("User " + userName + " logged in");
-        return /*encoder.matches(password, userDetails.getPassword()) ||*/ passwordMatches;
+        return encoder.matches(password, userDetails.getPassword());
     }
 
     @Override
