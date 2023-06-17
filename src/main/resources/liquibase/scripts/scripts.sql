@@ -34,7 +34,7 @@ CREATE TABLE comments
 
 -- changeset dzhosan:2
 ALTER TABLE users ADD COLUMN image_media_type VARCHAR(255);
-ALTER TABLE users ADD COLUMN image_file_size  BIGINT CHECK (image_file_size > 0);
+ALTER TABLE users ADD COLUMN image_file_size  BIGINT CHECK (image_file_size >= 0);
 
 ALTER TABLE ads ADD COLUMN image_media_type VARCHAR(255);
-ALTER TABLE ads ADD COLUMN image_file_size  BIGINT CHECK (image_file_size > 0);
+ALTER TABLE ads ADD COLUMN image_file_size  BIGINT CHECK (image_file_size >= 0);

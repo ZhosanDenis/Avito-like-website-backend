@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface AdRepository extends JpaRepository<AdEntity, Integer> {
 
-    boolean existsByUserEntityEmail(String userName);
-
     List<AdEntity> findAllByUserEntityEmail(String userName);
+
+    List<AdEntity> findAllByTitleLike(String title);
 }
