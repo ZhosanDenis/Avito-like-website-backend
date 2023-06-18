@@ -64,7 +64,8 @@ public class AdServiceImpl implements AdService {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         CommentEntity commentEntity = responseWrapperCommentMapper.toCommentEntity(createComment, new CommentEntity());
-        UserEntity userEntity = userRepository.findByEmail(userName);
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
         commentEntity.setUserEntity(userEntity);
         commentEntity.setAdEntity(adEntity);
         return responseWrapperCommentMapper.toCommentDto(commentRepository.save(commentEntity));
@@ -92,7 +93,8 @@ public class AdServiceImpl implements AdService {
     @Override
     @Transactional
     public Ads addAdvertising(CreateAds createAds, MultipartFile image, String userName) throws IOException {
-        UserEntity user = userRepository.findByEmail(userName);
+        UserEntity user = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
         AdEntity adEntity = adRepository.save(adMapper.toAdEntity(createAds, new AdEntity()));
         Path filePath = createPath(image, adEntity);
         adEntity.setUserEntity(user);

@@ -5,7 +5,7 @@ CREATE TABLE users
 (
     id         SERIAL PRIMARY KEY,
     email      TEXT         NOT NULL UNIQUE,
-    password   BIGINT       NOT NULL,
+    password   TEXT       NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name  VARCHAR(100) NOT NULL,
     phone      TEXT         NOT NULL,

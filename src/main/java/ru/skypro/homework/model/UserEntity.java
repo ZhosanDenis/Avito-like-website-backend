@@ -31,7 +31,7 @@ public class UserEntity {
     private String email;
 
     @Column(nullable = false)
-    private long password;
+    private String password;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;

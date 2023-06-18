@@ -249,8 +249,8 @@ public class AdController {
             summary = "Найти объявление по названию",
             tags = "Объявления"
     )
-    @GetMapping("/find/{title}")
-    public ResponseEntity<ResponseWrapperAds> findAdvertisingByTitle(@PathVariable String title) {
+    @GetMapping("/find")
+    public ResponseEntity<ResponseWrapperAds> findAdvertisingByTitle(@RequestParam String title) {
         return ResponseEntity.ok(adService.findByTitle(title));
     }
 
