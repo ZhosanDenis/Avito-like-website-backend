@@ -6,8 +6,14 @@ import lombok.ToString;
 import lombok.NoArgsConstructor;
 import ru.skypro.homework.dto.account.Role;
 
-import javax.persistence.*;
-import java.util.List;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Column;
+import javax.persistence.Enumerated;
+import javax.persistence.EnumType;
 import java.util.Objects;
 
 @Getter

@@ -15,7 +15,11 @@ import ru.skypro.homework.service.AccountService;
 import ru.skypro.homework.service.UserMapper;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -36,7 +40,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public boolean updatePassword(NewPassword newPassword, String userName) {
-        if (userRepository.existsByPassword(Math.abs(Objects.hash(userName, newPassword.getCurrentPassword())))) {
+        if (userRepository.existsByEmail(userName) &&
+                userRepository.existsByPassword(Math.abs(Objects.hash(userName, newPassword.getCurrentPassword())))) {
             UserEntity user = userRepository.findByEmail(userName);
             user.setPassword(Math.abs(Objects.hash(userName, newPassword.getNewPassword())));
             userRepository.save(user);
@@ -84,13 +89,23 @@ public class AccountServiceImpl implements AccountService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
 
-        Path path = Path.of(user.getImagePath());
+        findAndDownloadImage(response,
+                user.getImagePath(),
+                user.getImageMediaType(),
+                user.getImageFileSize());
+    }
+
+    static void findAndDownloadImage(HttpServletResponse response,
+                                     String imagePath,
+                                     String imageMediaType,
+                                     long imageFileSize) throws IOException {
+        Path path = Path.of(imagePath);
 
         try (InputStream is = Files.newInputStream(path);
              OutputStream os = response.getOutputStream()) {
             response.setStatus(200);
-            response.setContentType(user.getImageMediaType());
-            response.setContentLength((int) user.getImageFileSize());
+            response.setContentType(imageMediaType);
+            response.setContentLength((int) imageFileSize);
             is.transferTo(os);
         }
     }

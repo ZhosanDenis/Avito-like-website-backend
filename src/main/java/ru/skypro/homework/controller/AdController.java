@@ -21,6 +21,7 @@ import ru.skypro.homework.dto.comment.CreateComment;
 import ru.skypro.homework.dto.comment.ResponseWrapperComment;
 import ru.skypro.homework.service.AdService;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Slf4j
@@ -251,5 +252,15 @@ public class AdController {
     @GetMapping("/find/{title}")
     public ResponseEntity<ResponseWrapperAds> findAdvertisingByTitle(@PathVariable String title) {
         return ResponseEntity.ok(adService.findByTitle(title));
+    }
+
+    @GetMapping(value = "/image/{adId}/download")
+    public void downloadAdImageFromFS(@PathVariable int adId, HttpServletResponse response) throws IOException {
+        adService.downloadAdImageFromFS(adId, response);
+    }
+
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
