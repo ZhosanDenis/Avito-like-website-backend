@@ -61,7 +61,8 @@ public class AccountController {
     )
     @GetMapping("/me")
     public ResponseEntity<User> getUserInfo(Authentication authentication) {
-        return ResponseEntity.ok(accountService.getUserInfo(authentication));
+        String userName = authentication.getName();
+        return ResponseEntity.ok(accountService.getUserInfo(userName));
     }
 
     @Operation(
@@ -79,7 +80,8 @@ public class AccountController {
     )
     @PatchMapping("/me")
     public ResponseEntity<User> patchUserInfo(@RequestBody User user, Authentication authentication) {
-        return ResponseEntity.ok(accountService.patchUserInfo(user, authentication));
+        String userName = authentication.getName();
+        return ResponseEntity.ok(accountService.patchUserInfo(user, userName));
     }
 
     @Operation(
