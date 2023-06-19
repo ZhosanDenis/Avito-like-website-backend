@@ -22,6 +22,7 @@ import ru.skypro.homework.service.AdMapper;
 import ru.skypro.homework.service.AdService;
 import ru.skypro.homework.service.ResponseWrapperCommentMapper;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -63,7 +64,8 @@ public class AdServiceImpl implements AdService {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         CommentEntity commentEntity = responseWrapperCommentMapper.toCommentEntity(createComment, new CommentEntity());
-        UserEntity userEntity = userRepository.findByEmail(userName);
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
         commentEntity.setUserEntity(userEntity);
         commentEntity.setAdEntity(adEntity);
         return responseWrapperCommentMapper.toCommentDto(commentRepository.save(commentEntity));
@@ -91,7 +93,8 @@ public class AdServiceImpl implements AdService {
     @Override
     @Transactional
     public Ads addAdvertising(CreateAds createAds, MultipartFile image, String userName) throws IOException {
-        UserEntity user = userRepository.findByEmail(userName);
+        UserEntity user = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
         AdEntity adEntity = adRepository.save(adMapper.toAdEntity(createAds, new AdEntity()));
         Path filePath = createPath(image, adEntity);
         adEntity.setUserEntity(user);
@@ -162,6 +165,17 @@ public class AdServiceImpl implements AdService {
     public ResponseWrapperAds findByTitle(String title) {
         return adMapper.toResponseWrapperAds(
                 adRepository.findAllByTitleLike(title));
+    }
+
+    @Override
+    public void downloadAdImageFromFS(int adId, HttpServletResponse response) throws IOException {
+        AdEntity adEntity = adRepository.findById(adId)
+                .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
+
+        AccountServiceImpl.findAndDownloadImage(response,
+                adEntity.getImagePath(),
+                adEntity.getImageMediaType(),
+                adEntity.getImageFileSize());
     }
 
     private Path createPath(MultipartFile image, AdEntity adEntity) throws IOException {

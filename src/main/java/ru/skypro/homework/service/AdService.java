@@ -9,6 +9,7 @@ import ru.skypro.homework.dto.comment.Comment;
 import ru.skypro.homework.dto.comment.CreateComment;
 import ru.skypro.homework.dto.comment.ResponseWrapperComment;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public interface AdService {
@@ -35,4 +36,6 @@ public interface AdService {
     boolean deleteAdvertising(int id);
 
     ResponseWrapperAds findByTitle(String title);
+
+    void downloadAdImageFromFS(int adId, HttpServletResponse response) throws IOException;
 }

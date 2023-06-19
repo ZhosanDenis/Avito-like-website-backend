@@ -1,6 +1,5 @@
 package ru.skypro.homework.service;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.account.NewPassword;
 import ru.skypro.homework.dto.account.User;
@@ -12,9 +11,9 @@ import java.io.IOException;
 public interface AccountService {
     boolean updatePassword(NewPassword newPassword, String userName);
 
-    User getUserInfo(Authentication authentication);
+    User getUserInfo(String userName);
 
-    User patchUserInfo(User user, Authentication authentication);
+    User patchUserInfo(User user, String userName);
 
     boolean updateUserAvatar(String userName, MultipartFile image) throws IOException;
 
