@@ -38,3 +38,6 @@ ALTER TABLE users ADD COLUMN image_file_size  BIGINT CHECK (image_file_size >= 0
 
 ALTER TABLE ads ADD COLUMN image_media_type VARCHAR(255);
 ALTER TABLE ads ADD COLUMN image_file_size  BIGINT CHECK (image_file_size >= 0);
+
+-- changeset izavalin:change type of users_password
+ALTER TABLE users ALTER COLUMN password TYPE TEXT;
