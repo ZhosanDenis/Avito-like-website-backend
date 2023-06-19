@@ -1,20 +1,25 @@
 package ru.skypro.homework.service.impl;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import ru.skypro.homework.dto.account.RegisterReq;
 import ru.skypro.homework.dto.account.User;
 import ru.skypro.homework.model.UserEntity;
 import ru.skypro.homework.service.UserMapper;
 
-import java.util.Objects;
-
 @Component
 public class UserMapperImpl implements UserMapper {
+
+    private final PasswordEncoder encoder;
+
+    public UserMapperImpl(PasswordEncoder encoder) {
+        this.encoder = encoder;
+    }
 
     public UserEntity toUserEntity(RegisterReq req) {
         UserEntity userEntity = new UserEntity();
         userEntity.setEmail(req.getUsername());
-        userEntity.setPassword(Objects.hash(req.getUsername(), req.getPassword()));
+        userEntity.setPassword(encoder.encode(req.getPassword()));
         userEntity.setFirstName(req.getFirstName());
         userEntity.setLastName(req.getLastName());
         userEntity.setPhone(req.getPhone());

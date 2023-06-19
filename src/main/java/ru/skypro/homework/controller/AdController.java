@@ -21,6 +21,7 @@ import ru.skypro.homework.dto.comment.CreateComment;
 import ru.skypro.homework.dto.comment.ResponseWrapperComment;
 import ru.skypro.homework.service.AdService;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Slf4j
@@ -67,10 +68,8 @@ public class AdController {
             tags = "Объявления"
     )
     @GetMapping("/{id}")
-    public ResponseEntity<FullAds> getAdvertising(@PathVariable int id,
-                                                  Authentication authentication) {
-        String userName = authentication.getName();
-        return ResponseEntity.ok(adService.getAdvertising(id, userName));
+    public ResponseEntity<FullAds> getAdvertising(@PathVariable int id) {
+        return ResponseEntity.ok(adService.getAdvertising(id));
     }
 
     @Operation(
@@ -125,10 +124,8 @@ public class AdController {
     )
     @PatchMapping("/{id}")
     public ResponseEntity<Ads> updateAdvertising(@PathVariable int id,
-                                                 @RequestBody CreateAds createAds,
-                                                 Authentication authentication) {
-        String userName = authentication.getName();
-        return ResponseEntity.ok(adService.updateAdvertising(id, createAds, userName));
+                                                 @RequestBody CreateAds createAds) {
+        return ResponseEntity.ok(adService.updateAdvertising(id, createAds));
     }
 
     @Operation(
@@ -147,10 +144,8 @@ public class AdController {
     )
     @PatchMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateAdvertisingImage(@PathVariable int id,
-                                                    @RequestParam MultipartFile image,
-                                                    Authentication authentication) throws IOException {
-        String userName = authentication.getName();
-        adService.updateAdvertisingImage(id, image, userName);
+                                                    @RequestParam MultipartFile image) throws IOException {
+        adService.updateAdvertisingImage(id, image);
         return ResponseEntity.ok().build();
     }
 
@@ -165,10 +160,8 @@ public class AdController {
             tags = "Объявления"
     )
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAdvertising(@PathVariable int id,
-                                               Authentication authentication) {
-        String userName = authentication.getName();
-        adService.deleteAdvertising(id, userName);
+    public ResponseEntity<?> deleteAdvertising(@PathVariable int id) {
+        adService.deleteAdvertising(id);
         return ResponseEntity.ok().build();
     }
 
@@ -231,8 +224,8 @@ public class AdController {
     public ResponseEntity<Comment> updateComment(
             @PathVariable(name = "adId") Integer adId,
             @PathVariable(name = "commentId") Integer commentId,
-            @RequestBody Comment comment) {
-        return ResponseEntity.ok(adService.updateComment(adId, commentId, comment));
+            @RequestBody CreateComment createComment) {
+        return ResponseEntity.ok(adService.updateComment(adId, commentId, createComment));
     }
 
     @Operation(
@@ -250,5 +243,24 @@ public class AdController {
             @PathVariable(name = "commentId") Integer commentId) {
         adService.deleteComment(adId, commentId);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "Найти объявление по названию",
+            tags = "Объявления"
+    )
+    @GetMapping("/find")
+    public ResponseEntity<ResponseWrapperAds> findAdvertisingByTitle(@RequestParam String title) {
+        return ResponseEntity.ok(adService.findByTitle(title));
+    }
+
+    @GetMapping(value = "/image/{adId}/download")
+    public void downloadAdImageFromFS(@PathVariable int adId, HttpServletResponse response) throws IOException {
+        adService.downloadAdImageFromFS(adId, response);
+    }
+
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

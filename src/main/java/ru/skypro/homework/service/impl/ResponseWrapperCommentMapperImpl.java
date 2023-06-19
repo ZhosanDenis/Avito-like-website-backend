@@ -5,13 +5,10 @@ import ru.skypro.homework.dto.comment.Comment;
 import ru.skypro.homework.dto.comment.CreateComment;
 import ru.skypro.homework.dto.comment.ResponseWrapperComment;
 import ru.skypro.homework.model.CommentEntity;
-import ru.skypro.homework.model.UserEntity;
 import ru.skypro.homework.service.ResponseWrapperCommentMapper;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,8 +16,7 @@ import java.util.stream.Collectors;
 public class ResponseWrapperCommentMapperImpl implements ResponseWrapperCommentMapper {
 
     @Override
-    public CommentEntity toCommentEntity(CreateComment createComment) {
-        CommentEntity commentEntity = new CommentEntity();
+    public CommentEntity toCommentEntity(CreateComment createComment, CommentEntity commentEntity) {
         commentEntity.setText(createComment.getText());
         commentEntity.setCreatedAt(LocalDateTime.now());
         return commentEntity;
@@ -44,23 +40,11 @@ public class ResponseWrapperCommentMapperImpl implements ResponseWrapperCommentM
         comment.setAuthorImage("/users/image/" + commentEntity.getUserEntity().getId() + "/download");
         comment.setAuthorFirstName(commentEntity.getUserEntity().getFirstName());
         comment.setCreatedAt(commentEntity.getCreatedAt()
-                .toInstant(ZoneOffset.UTC).toEpochMilli());
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli());
         comment.setPk(commentEntity.getId());
         comment.setText(commentEntity.getText());
         return comment;
-    }
-
-    @Override
-    public CommentEntity toCommentEntity(Comment comment, CommentEntity commentEntity) {
-        commentEntity.setId(comment.getPk());
-        commentEntity.setText(comment.getText());
-        commentEntity.setCreatedAt(Instant.ofEpochMilli(comment.getCreatedAt())
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime());
-        UserEntity user = commentEntity.getUserEntity();
-        user.setId(comment.getAuthor());
-        user.setFirstName(comment.getAuthorFirstName());
-        commentEntity.setUserEntity(user);
-        return commentEntity;
     }
 }
