@@ -1,6 +1,8 @@
 package ru.skypro.homework.service.impl;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -28,6 +30,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 @Service
+@EnableMethodSecurity(securedEnabled = true)
 public class AdServiceImpl implements AdService {
     private final CommentRepository commentRepository;
     private final ResponseWrapperCommentMapper responseWrapperCommentMapper;
@@ -129,6 +132,7 @@ public class AdServiceImpl implements AdService {
 
     @Override
     @Transactional
+    @Secured({"USER", "ADMIN"})
     public Ads updateAdvertising(int id, CreateAds createAds) {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
