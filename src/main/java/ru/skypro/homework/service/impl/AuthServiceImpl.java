@@ -7,10 +7,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import ru.skypro.homework.model.UserEntity;
+import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.security.AppUser;
 import ru.skypro.homework.dto.account.RegisterReq;
 import ru.skypro.homework.dto.account.Role;
 import ru.skypro.homework.service.AuthService;
+import ru.skypro.homework.service.SecurityUserMapper;
 import ru.skypro.homework.service.UserMapper;
 
 import javax.annotation.PostConstruct;
@@ -25,12 +27,19 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserMapper mapper;
 
+    private final SecurityUserMapper securityUserMapper;
+
+    private final UserRepository userRepository;
+
     public AuthServiceImpl(UserDetailsManager manager,
                            PasswordEncoder passwordEncoder,
-                           UserMapper mapper) {
+                           UserMapper mapper, SecurityUserMapper securityUserMapper,
+                           UserRepository userRepository) {
         this.manager = manager;
         this.encoder = passwordEncoder;
         this.mapper = mapper;
+        this.securityUserMapper = securityUserMapper;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -48,9 +57,11 @@ public class AuthServiceImpl implements AuthService {
         if (manager.userExists(userName)) {
             return false;
         }
-        manager.createUser(
-                new AppUser(
-                        mapper.toUserEntity(registerReq)
+        manager.createUser(new AppUser(
+                        securityUserMapper.toUserDto(
+                                userRepository.save(
+                                        mapper.toUserEntity(registerReq))
+                        )
                 )
         );
         return true;
@@ -68,7 +79,10 @@ public class AuthServiceImpl implements AuthService {
         admin.setRole(Role.ADMIN);
         if (!manager.userExists(admin.getEmail())) {
             LOGGER.info("Admin was created");
-            manager.createUser(new AppUser(admin));
+            manager.createUser(new AppUser(
+                            securityUserMapper.toUserDto(admin)
+                    )
+            );
         }
     }
 }

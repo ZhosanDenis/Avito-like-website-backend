@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import ru.skypro.homework.model.UserEntity;
 import ru.skypro.homework.repository.UserRepository;
+import ru.skypro.homework.service.SecurityUserMapper;
 
 public class FromDbUserManager implements UserDetailsManager {
 
@@ -18,21 +19,24 @@ public class FromDbUserManager implements UserDetailsManager {
     @Autowired
     private PasswordEncoder encoder;
 
+    @Autowired
+    private SecurityUserMapper mapper;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
-        return new AppUser(userEntity);
+        return new AppUser(mapper.toUserDto(userEntity));
     }
 
     @Override
     public void createUser(UserDetails user) {
-        userRepository.save(((AppUser) user).getUser());
+        UserDetails userDetails = loadUserByUsername(user.getUsername());
     }
 
     @Override
     public void updateUser(UserDetails user) {
-        userRepository.save(((AppUser) user).getUser());
+        UserDetails userDetails = loadUserByUsername(user.getUsername());
     }
 
     @Override

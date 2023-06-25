@@ -3,22 +3,21 @@ package ru.skypro.homework.security;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import ru.skypro.homework.model.UserEntity;
 
 import java.util.Collection;
 import java.util.List;
 
 public class AppUser implements UserDetails {
 
-    private UserEntity user;
+    private UserDto user;
 
-    public AppUser(UserEntity user) {
+    public AppUser(UserDto user) {
         this.user = user;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(user.getRole().name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 
     @Override
@@ -28,7 +27,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getEmail();
+        return user.getUserName();
     }
 
     @Override
@@ -51,11 +50,11 @@ public class AppUser implements UserDetails {
         return true;
     }
 
-    public UserEntity getUser() {
+    public UserDto getUser() {
         return user;
     }
 
-    public void setUser(UserEntity user) {
+    public void setUser(UserDto user) {
         this.user = user;
     }
 }

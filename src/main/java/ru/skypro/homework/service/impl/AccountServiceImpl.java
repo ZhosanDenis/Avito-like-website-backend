@@ -15,6 +15,7 @@ import ru.skypro.homework.model.UserEntity;
 import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.security.AppUser;
 import ru.skypro.homework.service.AccountService;
+import ru.skypro.homework.service.SecurityUserMapper;
 import ru.skypro.homework.service.UserMapper;
 
 import javax.servlet.http.HttpServletResponse;
@@ -27,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -37,6 +39,8 @@ public class AccountServiceImpl implements AccountService {
     private final UserRepository userRepository;
 
     private final UserMapper userMapper;
+
+    private final SecurityUserMapper securityUserMapper;
 
     @Value("${users.avatar.dir.path}")
     private String avatarsDir;
@@ -59,7 +63,8 @@ public class AccountServiceImpl implements AccountService {
         UserDetails user = manager.loadUserByUsername(userName);
         log.info("Information was received for user " + userName);
         return userMapper.toUser(
-                ((AppUser) user).getUser()
+                (userRepository.findByEmail(userName))
+                        .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"))
         );
     }
 
@@ -67,26 +72,28 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public User patchUserInfo(User user, String userName) {
         UserDetails appUser = manager.loadUserByUsername(userName);
-        UserEntity userEntity = userMapper.updateUserEntity(((AppUser) appUser).getUser(), user);
-        ((AppUser) appUser).setUser(userEntity);
-        manager.updateUser(appUser);
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        UserEntity updatedUser = userRepository.save(userMapper.updateUserEntity(userEntity, user));
+        manager.updateUser(new AppUser(securityUserMapper.toUserDto(updatedUser)));
         log.info("Information was updated for user " + userName);
-        return userMapper.toUser(((AppUser) appUser).getUser());
+        return userMapper.toUser(updatedUser);
     }
 
     @Override
     @Transactional
     public boolean updateUserAvatar(String userName, MultipartFile image) throws IOException {
-        UserDetails userDetails = manager.loadUserByUsername(userName);
-        UserEntity user = ((AppUser) userDetails).getUser();
-        Path filePath = Path.of(avatarsDir, user.getId() + "."
+        UserDetails user = manager.loadUserByUsername(userName);
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        Path filePath = Path.of(avatarsDir, userEntity.getId() + "."
                 + StringUtils.getFilenameExtension(image.getOriginalFilename()));
         uploadImage(image, filePath);
-        user.setImagePath(filePath.getParent().toString());
-        user.setImageMediaType(image.getContentType());
-        user.setImageFileSize(image.getSize());
-        ((AppUser) userDetails).setUser(user);
-        manager.updateUser(userDetails);
+        userEntity.setImagePath(filePath.getParent().toString());
+        userEntity.setImageMediaType(image.getContentType());
+        userEntity.setImageFileSize(image.getSize());
+        ((AppUser) user).setUser(securityUserMapper.toUserDto(userEntity));
+        manager.updateUser(user);
         log.info("Avatar was updated for user " + userName);
         return true;
     }
