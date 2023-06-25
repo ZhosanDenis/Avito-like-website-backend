@@ -37,9 +37,12 @@ public class AuthController {
     )
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginReq req) {
-        if (authService.login(req.getUsername(), req.getPassword())) {
+        String userName = req.getUsername();
+        if (authService.login(userName, req.getPassword())) {
+            log.info("User " + userName + " logged in");
             return ResponseEntity.ok().build();
         } else {
+            log.warn("User " + userName + " does not exist");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
@@ -55,9 +58,12 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterReq req) {
         Role role = (req.getRole() == null) ? USER : req.getRole();
         req.setRole(role);
+        String userName = req.getUsername();
         if (authService.register(req, role)) {
+            log.info("User " + userName + " has been registered");
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } else {
+            log.warn("User can not register, because user with email " + userName + " exists in the database");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }

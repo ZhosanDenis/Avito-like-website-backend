@@ -17,7 +17,7 @@ public interface AdService {
 
     Comment addComment(Integer id, CreateComment createComment, String userName);
 
-    void deleteComment(Integer adId, Integer commentId);
+    boolean deleteComment(Integer adId, Integer commentId);
 
     Comment updateComment(Integer adId, Integer commentId, CreateComment createComment);
 

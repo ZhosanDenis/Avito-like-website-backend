@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -125,7 +126,11 @@ public class AdController {
     @PatchMapping("/{id}")
     public ResponseEntity<Ads> updateAdvertising(@PathVariable int id,
                                                  @RequestBody CreateAds createAds) {
-        return ResponseEntity.ok(adService.updateAdvertising(id, createAds));
+        Ads updatedAds = adService.updateAdvertising(id, createAds);
+        if (updatedAds != null) {
+            return ResponseEntity.ok(updatedAds);
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @Operation(
@@ -161,8 +166,10 @@ public class AdController {
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteAdvertising(@PathVariable int id) {
-        adService.deleteAdvertising(id);
-        return ResponseEntity.ok().build();
+        if (adService.deleteAdvertising(id)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @Operation(
@@ -225,7 +232,11 @@ public class AdController {
             @PathVariable(name = "adId") Integer adId,
             @PathVariable(name = "commentId") Integer commentId,
             @RequestBody CreateComment createComment) {
-        return ResponseEntity.ok(adService.updateComment(adId, commentId, createComment));
+        Comment comment = adService.updateComment(adId, commentId, createComment);
+        if (comment != null) {
+            return ResponseEntity.ok(comment);
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @Operation(
@@ -241,8 +252,10 @@ public class AdController {
     public ResponseEntity<?> deleteComment(
             @PathVariable(name = "adId") Integer adId,
             @PathVariable(name = "commentId") Integer commentId) {
-        adService.deleteComment(adId, commentId);
-        return ResponseEntity.ok().build();
+        if (adService.deleteComment(adId, commentId)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @Operation(
