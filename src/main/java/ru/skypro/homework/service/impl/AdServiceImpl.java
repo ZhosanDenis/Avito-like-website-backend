@@ -1,12 +1,14 @@
 package ru.skypro.homework.service.impl;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import ru.skypro.homework.dto.account.Role;
 import ru.skypro.homework.dto.ads.Ads;
 import ru.skypro.homework.dto.ads.CreateAds;
 import ru.skypro.homework.dto.ads.FullAds;
@@ -76,21 +78,41 @@ public class AdServiceImpl implements AdService {
 
     @Override
     @Transactional
-    public void deleteComment(Integer adId, Integer commentId) {
-        commentRepository.delete(commentRepository
-                .findByIdAndAdEntity_Id(commentId, adId));
+    public boolean deleteComment(Integer adId, Integer commentId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        CommentEntity commentEntity = commentRepository.findByIdAndAdEntity_Id(commentId, adId)
+                .orElseThrow(() -> new IllegalArgumentException("Комментарий не найден"));
+        if (userCanChangeComment(userEntity, commentEntity)) {
+            commentRepository.delete(commentRepository
+                    .findByIdAndAdEntity_Id(commentId, adId)
+                    .orElseThrow(() -> new IllegalArgumentException("Комментарий не найден"))
+            );
+            return true;
+        }
+        return false;
     }
 
     @Override
     @Transactional
     public Comment updateComment(Integer adId, Integer commentId, CreateComment createComment) {
-        CommentEntity commentEntity = commentRepository.findByIdAndAdEntity_Id(commentId, adId);
-        return responseWrapperCommentMapper.toCommentDto(
-                commentRepository.save(
-                        responseWrapperCommentMapper.toCommentEntity(
-                                createComment, commentEntity)
-                )
-        );
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        CommentEntity commentEntity = commentRepository.findByIdAndAdEntity_Id(commentId, adId)
+                .orElseThrow(() -> new IllegalArgumentException("Комментарий не найден"));
+        if (userCanChangeComment(userEntity, commentEntity)) {
+            return responseWrapperCommentMapper.toCommentDto(
+                    commentRepository.save(
+                            responseWrapperCommentMapper.toCommentEntity(
+                                    createComment, commentEntity)
+                    )
+            );
+        }
+        return null;
     }
 
     @Override
@@ -132,15 +154,21 @@ public class AdServiceImpl implements AdService {
 
     @Override
     @Transactional
-    @Secured({"USER", "ADMIN"})
     public Ads updateAdvertising(int id, CreateAds createAds) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
-        return adMapper.toAds(
-                adRepository.save(
-                        adMapper.toAdEntity(createAds, adEntity)
-                )
-        );
+        if (userCanChangeAdvertising(userEntity, adEntity)) {
+            return adMapper.toAds(
+                    adRepository.save(
+                            adMapper.toAdEntity(createAds, adEntity)
+                    )
+            );
+        }
+        return null;
     }
 
     @Override
@@ -159,9 +187,18 @@ public class AdServiceImpl implements AdService {
     @Override
     @Transactional
     public boolean deleteAdvertising(int id) {
-        commentRepository.deleteAllByAdEntity_Id(id);
-        adRepository.deleteById(id);
-        return true;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        AdEntity adEntity = adRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
+        if (userCanChangeAdvertising(userEntity, adEntity)) {
+            commentRepository.deleteAllByAdEntity_Id(id);
+            adRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -187,5 +224,13 @@ public class AdServiceImpl implements AdService {
                 + StringUtils.getFilenameExtension(image.getOriginalFilename()));
         AccountServiceImpl.uploadImage(image, filePath);
         return filePath;
+    }
+
+    private boolean userCanChangeAdvertising(UserEntity user, AdEntity ad) {
+        return user.getRole().equals(Role.ADMIN) || ad.getUserEntity().equals(user);
+    }
+
+    private boolean userCanChangeComment(UserEntity user, CommentEntity comment) {
+        return user.getRole().equals(Role.ADMIN) || comment.getUserEntity().equals(user);
     }
 }

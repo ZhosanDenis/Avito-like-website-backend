@@ -36,11 +36,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean login(String userName, String password) {
         if (!manager.userExists(userName)) {
-            LOGGER.warn("User does not exist");
             return false;
         }
         UserDetails userDetails = manager.loadUserByUsername(userName);
-        LOGGER.info("User " + userName + " logged in");
         return encoder.matches(password, userDetails.getPassword());
     }
 
@@ -48,7 +46,6 @@ public class AuthServiceImpl implements AuthService {
     public boolean register(RegisterReq registerReq, Role role) {
         String userName = registerReq.getUsername();
         if (manager.userExists(userName)) {
-            LOGGER.warn("User can not register, because user with email " + userName + " exists in the database");
             return false;
         }
         manager.createUser(
@@ -56,7 +53,6 @@ public class AuthServiceImpl implements AuthService {
                         mapper.toUserEntity(registerReq)
                 )
         );
-        LOGGER.info("User " + userName + " has been registered");
         return true;
     }
 
@@ -71,6 +67,7 @@ public class AuthServiceImpl implements AuthService {
         admin.setPhone("+71111111111");
         admin.setRole(Role.ADMIN);
         if (!manager.userExists(admin.getEmail())) {
+            LOGGER.info("Admin was created");
             manager.createUser(new AppUser(admin));
         }
     }
