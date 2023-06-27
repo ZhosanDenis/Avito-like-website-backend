@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.account.NewPassword;
@@ -38,9 +37,8 @@ public class AccountController {
             tags = "Пользователи"
     )
     @PostMapping("/set_password")
-    public ResponseEntity<?> updatePassword(@RequestBody NewPassword newPassword, Authentication authentication) {
-        String userName = authentication.getName();
-        if (accountService.updatePassword(newPassword, userName)) {
+    public ResponseEntity<?> updatePassword(@RequestBody NewPassword newPassword) {
+        if (accountService.updatePassword(newPassword)) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -60,9 +58,8 @@ public class AccountController {
             tags = "Пользователи"
     )
     @GetMapping("/me")
-    public ResponseEntity<User> getUserInfo(Authentication authentication) {
-        String userName = authentication.getName();
-        return ResponseEntity.ok(accountService.getUserInfo(userName));
+    public ResponseEntity<User> getUserInfo() {
+        return ResponseEntity.ok(accountService.getUserInfo());
     }
 
     @Operation(
@@ -79,9 +76,8 @@ public class AccountController {
             tags = "Пользователи"
     )
     @PatchMapping("/me")
-    public ResponseEntity<User> patchUserInfo(@RequestBody User user, Authentication authentication) {
-        String userName = authentication.getName();
-        return ResponseEntity.ok(accountService.patchUserInfo(user, userName));
+    public ResponseEntity<User> patchUserInfo(@RequestBody User user) {
+        return ResponseEntity.ok(accountService.patchUserInfo(user));
     }
 
     @Operation(
@@ -93,11 +89,10 @@ public class AccountController {
             tags = "Пользователи"
     )
     @PatchMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateUserAvatar(@RequestParam MultipartFile image, Authentication authentication) throws IOException {
-        String userName = authentication.getName();
+    public ResponseEntity<?> updateUserAvatar(@RequestParam MultipartFile image) throws IOException {
         if (image.getSize() > 10 * 1024 * 1024) {
             return ResponseEntity.badRequest().body("File is too big");
-        } else if (accountService.updateUserAvatar(userName, image)) {
+        } else if (accountService.updateUserAvatar(image)) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
