@@ -1,7 +1,7 @@
 package ru.skypro.homework.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+@Slf4j
 @Service
-@EnableMethodSecurity(securedEnabled = true)
 public class AdServiceImpl implements AdService {
     private final CommentRepository commentRepository;
     private final ResponseWrapperCommentMapper responseWrapperCommentMapper;
@@ -124,7 +124,7 @@ public class AdServiceImpl implements AdService {
         AdEntity adEntity = adRepository.save(adMapper.toAdEntity(createAds, new AdEntity()));
         Path filePath = createPath(image, adEntity);
         adEntity.setUserEntity(user);
-        adEntity.setImagePath(filePath.getParent().toString());
+        adEntity.setImagePath(filePath.toAbsolutePath().toString());
         adEntity.setImageMediaType(image.getContentType());
         adEntity.setImageFileSize(image.getSize());
 
@@ -177,7 +177,7 @@ public class AdServiceImpl implements AdService {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         Path filePath = createPath(image, adEntity);
-        adEntity.setImagePath(filePath.getParent().toString());
+        adEntity.setImagePath(filePath.toAbsolutePath().toString());
         adEntity.setImageMediaType(image.getContentType());
         adEntity.setImageFileSize(image.getSize());
         adRepository.save(adEntity);
@@ -216,6 +216,7 @@ public class AdServiceImpl implements AdService {
                 adEntity.getImagePath(),
                 adEntity.getImageMediaType(),
                 adEntity.getImageFileSize());
+        log.info("The method was called to download ads image with title " + adEntity.getTitle());
     }
 
     private Path createPath(MultipartFile image, AdEntity adEntity) throws IOException {

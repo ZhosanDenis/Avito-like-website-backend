@@ -99,7 +99,7 @@ public class AccountController {
         }
     }
 
-    @GetMapping(value = "/image/{userId}/download")
+    @GetMapping(value = "/image/{userId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     public void downloadUserAvatarFromFS(@PathVariable int userId, HttpServletResponse response) throws IOException {
         accountService.downloadAvatarFromFS(userId, response);
     }

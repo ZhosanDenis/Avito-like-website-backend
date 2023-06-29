@@ -87,7 +87,7 @@ public class AccountServiceImpl implements AccountService {
         Path filePath = Path.of(avatarsDir, userEntity.getId() + "."
                 + StringUtils.getFilenameExtension(image.getOriginalFilename()));
         uploadImage(image, filePath);
-        userEntity.setImagePath(filePath.getParent().toString());
+        userEntity.setImagePath(filePath.toAbsolutePath().toString());
         userEntity.setImageMediaType(image.getContentType());
         userEntity.setImageFileSize(image.getSize());
         log.info("Avatar was updated for user " + userName);
@@ -98,7 +98,7 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public void downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException {
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
         findAndDownloadImage(response,
                 user.getImagePath(),

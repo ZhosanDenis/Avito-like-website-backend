@@ -263,7 +263,7 @@ public class AdController {
         return ResponseEntity.ok(adService.findByTitle(title));
     }
 
-    @GetMapping(value = "/image/{adId}/download")
+    @GetMapping(value = "/image/{adId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     public void downloadAdImageFromFS(@PathVariable int adId, HttpServletResponse response) throws IOException {
         adService.downloadAdImageFromFS(adId, response);
     }

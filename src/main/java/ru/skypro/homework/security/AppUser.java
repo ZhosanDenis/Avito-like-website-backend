@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
+import java.util.Optional;
 
 @Component
 @RequestScope(proxyMode = ScopedProxyMode.TARGET_CLASS)
@@ -18,17 +19,27 @@ public class AppUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        return Optional.ofNullable(user)
+                .map(UserDto::getRole)
+                .map(Enum::name)
+                .map(role -> "ROLE_" + role)
+                .map(SimpleGrantedAuthority::new)
+                .map(Collections::singleton)
+                .orElse(null);
     }
 
     @Override
     public String getPassword() {
-        return user.getPassword();
+        return Optional.ofNullable(user)
+                .map(UserDto::getPassword)
+                .orElse(null);
     }
 
     @Override
     public String getUsername() {
-        return user.getUserName();
+        return Optional.ofNullable(user)
+                .map(UserDto::getUserName)
+                .orElse(null);
     }
 
     @Override
