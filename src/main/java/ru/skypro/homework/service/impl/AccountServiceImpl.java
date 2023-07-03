@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,9 +14,7 @@ import ru.skypro.homework.dto.account.NewPassword;
 import ru.skypro.homework.dto.account.User;
 import ru.skypro.homework.model.UserEntity;
 import ru.skypro.homework.repository.UserRepository;
-import ru.skypro.homework.security.AppUser;
 import ru.skypro.homework.service.AccountService;
-import ru.skypro.homework.service.SecurityUserMapper;
 import ru.skypro.homework.service.UserMapper;
 
 import javax.servlet.http.HttpServletResponse;
@@ -40,17 +39,17 @@ public class AccountServiceImpl implements AccountService {
 
     private final UserMapper userMapper;
 
-    private final SecurityUserMapper securityUserMapper;
+    private final UserDetails userDetails;
 
     @Value("${users.avatar.dir.path}")
     private String avatarsDir;
 
     @Override
     @Transactional
-    public boolean updatePassword(NewPassword newPassword, String userName) {
-        if (userRepository.existsByEmail(userName)) {
+    public boolean updatePassword(NewPassword newPassword) {
+        if (userDetails != null) {
             manager.changePassword(newPassword.getCurrentPassword(), newPassword.getNewPassword());
-            log.info("Password was changed for user " + userName);
+            log.info("Password was changed for user " + userDetails.getUsername());
             return true;
         }
         log.warn("User does not exist");
@@ -59,41 +58,38 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    public User getUserInfo(String userName) {
-        UserDetails user = manager.loadUserByUsername(userName);
+    public User getUserInfo() {
+        String userName = userDetails.getUsername();
         log.info("Information was received for user " + userName);
         return userMapper.toUser(
                 (userRepository.findByEmail(userName))
-                        .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"))
+                        .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"))
         );
     }
 
     @Override
     @Transactional
-    public User patchUserInfo(User user, String userName) {
-        UserDetails appUser = manager.loadUserByUsername(userName);
+    public User patchUserInfo(User user) {
+        String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
         UserEntity updatedUser = userRepository.save(userMapper.updateUserEntity(userEntity, user));
-        manager.updateUser(new AppUser(securityUserMapper.toUserDto(updatedUser)));
         log.info("Information was updated for user " + userName);
         return userMapper.toUser(updatedUser);
     }
 
     @Override
     @Transactional
-    public boolean updateUserAvatar(String userName, MultipartFile image) throws IOException {
-        UserDetails user = manager.loadUserByUsername(userName);
+    public boolean updateUserAvatar(MultipartFile image) throws IOException {
+        String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
         Path filePath = Path.of(avatarsDir, userEntity.getId() + "."
                 + StringUtils.getFilenameExtension(image.getOriginalFilename()));
         uploadImage(image, filePath);
-        userEntity.setImagePath(filePath.getParent().toString());
+        userEntity.setImagePath(filePath.toAbsolutePath().toString());
         userEntity.setImageMediaType(image.getContentType());
         userEntity.setImageFileSize(image.getSize());
-        ((AppUser) user).setUser(securityUserMapper.toUserDto(userEntity));
-        manager.updateUser(user);
         log.info("Avatar was updated for user " + userName);
         return true;
     }
@@ -102,7 +98,7 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public void downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException {
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
         findAndDownloadImage(response,
                 user.getImagePath(),

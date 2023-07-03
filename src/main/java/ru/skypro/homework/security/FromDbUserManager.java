@@ -1,42 +1,50 @@
 package ru.skypro.homework.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
+import org.springframework.stereotype.Service;
 import ru.skypro.homework.model.UserEntity;
 import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.service.SecurityUserMapper;
 
+@Service
 public class FromDbUserManager implements UserDetailsManager {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder encoder;
+    private final PasswordEncoder encoder;
 
-    @Autowired
-    private SecurityUserMapper mapper;
+    private final SecurityUserMapper mapper;
+
+    private final AppUser userDetails;
+
+    public FromDbUserManager(UserRepository userRepository,
+                             PasswordEncoder encoder,
+                             SecurityUserMapper mapper,
+                             AppUser userDetails) {
+        this.userRepository = userRepository;
+        this.encoder = encoder;
+        this.mapper = mapper;
+        this.userDetails = userDetails;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserEntity userEntity = userRepository.findByEmail(username)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
-        return new AppUser(mapper.toUserDto(userEntity));
+        UserDto userDto = userRepository.findByEmail(username)
+                .map(mapper::toUserDto)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        userDetails.setUser(userDto);
+        return userDetails;
     }
 
     @Override
     public void createUser(UserDetails user) {
-        UserDetails userDetails = loadUserByUsername(user.getUsername());
     }
 
     @Override
     public void updateUser(UserDetails user) {
-        UserDetails userDetails = loadUserByUsername(user.getUsername());
     }
 
     @Override
@@ -46,11 +54,9 @@ public class FromDbUserManager implements UserDetailsManager {
 
     @Override
     public void changePassword(String oldPassword, String newPassword) {
-        Authentication currentUser = SecurityContextHolder.getContext().getAuthentication();
-        String userName = currentUser.getName();
-        UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
-        if (encoder.matches(oldPassword, userEntity.getPassword())) {
+        if (encoder.matches(oldPassword, userDetails.getPassword())) {
+            UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
             userEntity.setPassword(encoder.encode(newPassword));
             userRepository.save(userEntity);
         }

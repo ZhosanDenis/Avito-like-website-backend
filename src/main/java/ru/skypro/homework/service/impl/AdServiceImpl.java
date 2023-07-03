@@ -1,9 +1,9 @@
 package ru.skypro.homework.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -31,14 +31,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+@Slf4j
 @Service
-@EnableMethodSecurity(securedEnabled = true)
 public class AdServiceImpl implements AdService {
     private final CommentRepository commentRepository;
     private final ResponseWrapperCommentMapper responseWrapperCommentMapper;
     private final UserRepository userRepository;
     private final AdRepository adRepository;
     private final AdMapper adMapper;
+    private final UserDetails userDetails;
 
     @Value("${ads.image.dir.path}")
     private String adsImageDir;
@@ -47,12 +48,14 @@ public class AdServiceImpl implements AdService {
                          ResponseWrapperCommentMapper responseWrapperCommentMapper,
                          UserRepository userRepository,
                          AdRepository adRepository,
-                         AdMapper adMapper) {
+                         AdMapper adMapper,
+                         UserDetails userDetails) {
         this.commentRepository = commentRepository;
         this.responseWrapperCommentMapper = responseWrapperCommentMapper;
         this.userRepository = userRepository;
         this.adRepository = adRepository;
         this.adMapper = adMapper;
+        this.userDetails = userDetails;
     }
 
     @Override
@@ -65,12 +68,12 @@ public class AdServiceImpl implements AdService {
 
     @Override
     @Transactional
-    public Comment addComment(Integer id, CreateComment createComment, String userName) {
+    public Comment addComment(Integer id, CreateComment createComment) {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         CommentEntity commentEntity = responseWrapperCommentMapper.toCommentEntity(createComment, new CommentEntity());
-        UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
         commentEntity.setUserEntity(userEntity);
         commentEntity.setAdEntity(adEntity);
         return responseWrapperCommentMapper.toCommentDto(commentRepository.save(commentEntity));
@@ -79,10 +82,9 @@ public class AdServiceImpl implements AdService {
     @Override
     @Transactional
     public boolean deleteComment(Integer adId, Integer commentId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userName = authentication.getName();
+        String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
         CommentEntity commentEntity = commentRepository.findByIdAndAdEntity_Id(commentId, adId)
                 .orElseThrow(() -> new IllegalArgumentException("Комментарий не найден"));
         if (userCanChangeComment(userEntity, commentEntity)) {
@@ -98,10 +100,9 @@ public class AdServiceImpl implements AdService {
     @Override
     @Transactional
     public Comment updateComment(Integer adId, Integer commentId, CreateComment createComment) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userName = authentication.getName();
+        String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
         CommentEntity commentEntity = commentRepository.findByIdAndAdEntity_Id(commentId, adId)
                 .orElseThrow(() -> new IllegalArgumentException("Комментарий не найден"));
         if (userCanChangeComment(userEntity, commentEntity)) {
@@ -117,13 +118,13 @@ public class AdServiceImpl implements AdService {
 
     @Override
     @Transactional
-    public Ads addAdvertising(CreateAds createAds, MultipartFile image, String userName) throws IOException {
-        UserEntity user = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+    public Ads addAdvertising(CreateAds createAds, MultipartFile image) throws IOException {
+        UserEntity user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
         AdEntity adEntity = adRepository.save(adMapper.toAdEntity(createAds, new AdEntity()));
         Path filePath = createPath(image, adEntity);
         adEntity.setUserEntity(user);
-        adEntity.setImagePath(filePath.getParent().toString());
+        adEntity.setImagePath(filePath.toAbsolutePath().toString());
         adEntity.setImageMediaType(image.getContentType());
         adEntity.setImageFileSize(image.getSize());
 
@@ -147,18 +148,17 @@ public class AdServiceImpl implements AdService {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseWrapperAds getAllMyAdvertising(String userName) {
-        List<AdEntity> entityList = adRepository.findAllByUserEntityEmail(userName);
+    public ResponseWrapperAds getAllMyAdvertising() {
+        List<AdEntity> entityList = adRepository.findAllByUserEntityEmail(userDetails.getUsername());
         return adMapper.toResponseWrapperAds(entityList);
     }
 
     @Override
     @Transactional
     public Ads updateAdvertising(int id, CreateAds createAds) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userName = authentication.getName();
+        String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         if (userCanChangeAdvertising(userEntity, adEntity)) {
@@ -177,7 +177,7 @@ public class AdServiceImpl implements AdService {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         Path filePath = createPath(image, adEntity);
-        adEntity.setImagePath(filePath.getParent().toString());
+        adEntity.setImagePath(filePath.toAbsolutePath().toString());
         adEntity.setImageMediaType(image.getContentType());
         adEntity.setImageFileSize(image.getSize());
         adRepository.save(adEntity);
@@ -187,10 +187,9 @@ public class AdServiceImpl implements AdService {
     @Override
     @Transactional
     public boolean deleteAdvertising(int id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userName = authentication.getName();
+        String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
         if (userCanChangeAdvertising(userEntity, adEntity)) {
@@ -217,6 +216,7 @@ public class AdServiceImpl implements AdService {
                 adEntity.getImagePath(),
                 adEntity.getImageMediaType(),
                 adEntity.getImageFileSize());
+        log.info("The method was called to download ads image with title " + adEntity.getTitle());
     }
 
     private Path createPath(MultipartFile image, AdEntity adEntity) throws IOException {
@@ -227,10 +227,10 @@ public class AdServiceImpl implements AdService {
     }
 
     private boolean userCanChangeAdvertising(UserEntity user, AdEntity ad) {
-        return user.getRole().equals(Role.ADMIN) || ad.getUserEntity().equals(user);
+        return user.getRole() == Role.ADMIN || ad.getUserEntity().equals(user);
     }
 
     private boolean userCanChangeComment(UserEntity user, CommentEntity comment) {
-        return user.getRole().equals(Role.ADMIN) || comment.getUserEntity().equals(user);
+        return user.getRole() == Role.ADMIN || comment.getUserEntity().equals(user);
     }
 }
