@@ -27,6 +27,13 @@ public class AccountController {
 
     private final AccountService accountService;
 
+    /**
+     * Обновление пароля пользователя. Используется метод
+     * {@link AccountService#updatePassword(NewPassword)}
+     * @param newPassword объект, содержащий текущий и новый пароли пользователя
+     * @return {@link ResponseEntity#ResponseEntity(HttpStatus)}
+     * @see ResponseEntity#ok()
+     */
     @Operation(
             summary = "Обновление пароля",
             responses = {
@@ -44,6 +51,11 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
+    /**
+     * Получение данных об авторизованном пользователе. Используется метод
+     * {@link AccountService#getUserInfo()}
+     * @return {@link ResponseEntity#ok()}
+     */
     @Operation(
             summary = "Получить информацию об авторизованном пользователе",
             responses = {

@@ -23,8 +23,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
@@ -41,9 +44,22 @@ public class AccountServiceImpl implements AccountService {
 
     private final UserDetails userDetails;
 
+
     @Value("${users.avatar.dir.path}")
     private String avatarsDir;
 
+    /**
+     * Обновление пароля текущего пользователя. На вход передаётся объект класса
+     * <b>NewPassword</b>,
+     * происходит проверка корректности нового пароля,
+     * сохраняется новый пароль для текущего пользователя.
+     * Используется метод класса {@link UserDetailsManager#changePassword(String, String)}
+     * Используются методы класса {@link NewPassword#getNewPassword()}
+     * Используются методы класса {@link NewPassword#getCurrentPassword()}
+     * @param newPassword объект, содержащий текущий и новый пароли пользователя
+     * @return возвращает {@code true}, если пароль изменён, или {@code false}, если новый пароль некорректен
+     * @see UserDetails#getUsername()
+     */
     @Override
     @Transactional
     public boolean updatePassword(NewPassword newPassword) {
@@ -59,6 +75,16 @@ public class AccountServiceImpl implements AccountService {
         return false;
     }
 
+
+    /**
+     * Получение текущего пользователя из БД путём
+     * получения имени пользователя (логина) из объекта класса <b>UserDetails</b>.
+     * <br>Используется метод {@link UserDetails#getUsername()}
+     * <br>Для получения пользователя используется метод класса
+     * {@link UserRepository#findByEmail(String)}
+     * @return Пользователь
+     * @throws UsernameNotFoundException если пользователь с таким логином не найден в БД
+     */
     @Override
     @Transactional(readOnly = true)
     public User getUserInfo() {
@@ -70,6 +96,17 @@ public class AccountServiceImpl implements AccountService {
         );
     }
 
+    /**
+     * Обновление данных текущего пользователя. Логин пользователя получается из объекта
+     * класса <b>UserDetails</b> методом {@link UserDetails#getUsername()}
+     * <br> Получение пользователя из БД происходит в методе
+     * {@link UserRepository#findByEmail(String)}
+     * <br> Сохранение пользователя происходит в методе {@link UserRepository#save(Object)}
+     * @param user Данные пользователя из веб-интерфейса
+     * @return обновлённый пользователь
+     * @throws UsernameNotFoundException если пользователь с таким логином не найден в БД
+     * @see UserMapper#updateUserEntity(UserEntity, User)
+     */
     @Override
     @Transactional
     public User patchUserInfo(User user) {
@@ -81,6 +118,21 @@ public class AccountServiceImpl implements AccountService {
         return userMapper.toUser(updatedUser);
     }
 
+    /**
+     * Обновление аватара текущего пользователя. Используется метод
+     * <br> <b>uploadImage(image, filePath)</b>. Логин пользователя получается из объекта
+     * класса <b>UserDetails</b> методом {@link UserDetails#getUsername()}
+     * <br> Получение пользователя из БД происходит в методе
+     * {@link UserRepository#findByEmail(String)}
+     * @param image файл картинки
+     * @return {@code true}, если аватар обновлён
+     * @throws IOException ошибка ввода-вывода
+     * @throws UsernameNotFoundException если текущий пользователь не найден в БД
+     * @see Files#deleteIfExists(Path)
+     * @see UserEntity#getImagePath()
+     * @see Path#of(String, String...)
+     * @see StringUtils#getFilenameExtension(String)
+     */
     @Override
     @Transactional
     public boolean updateUserAvatar(MultipartFile image) throws IOException {
@@ -100,9 +152,22 @@ public class AccountServiceImpl implements AccountService {
         return true;
     }
 
+    /**
+     * Загрузка аватара из файловой системы по id пользователя. <br> Используется метод
+     * {@link UserRepository#findById(Object)} для получения пользователя из БД.
+     * Для формирования ответа сервера используется метод
+     * {@link #findAndDownloadImage(HttpServletResponse, String, String, long)}
+     * @param userId id пользователя
+     * @param response ответ сервера
+     * @return {@code true}, если аватар пользователя загружен
+     * @throws IOException ошибка ввода-вывода
+     * @throws UsernameNotFoundException если пользователь с данным id не найден в БД
+     * @see #downloadAvatarFromFS(int, HttpServletResponse)
+     */
     @Override
     @Transactional
-    public boolean downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException {
+    public boolean downloadAvatarFromFS(int userId, HttpServletResponse response)
+            throws IOException {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
@@ -117,6 +182,17 @@ public class AccountServiceImpl implements AccountService {
         return false;
     }
 
+    /**
+     * Копирование данных из файла рисунка в ответа сервера. Входной поток получаем
+     * из метода {@link Files#newInputStream(Path, OpenOption...)}. Выходной поток
+     * получаем из метода {@link HttpServletResponse#getOutputStream()}
+     * @param response ответ сервера
+     * @param imagePath путь и название файла с аватаркой
+     * @param imageMediaType тип файла аватарки
+     * @param imageFileSize размер файла аватарки
+     * @throws IOException ошибка ввода - вывода
+     * @see Path#of(URI)
+     */
     static void findAndDownloadImage(HttpServletResponse response,
                                      String imagePath,
                                      String imageMediaType,
@@ -132,6 +208,16 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    /**
+     * Загрузка на сервер файла картинки. Входной поток получаем методом
+     * {@link MultipartFile#getInputStream()}. Выходной поток получаем методом
+     * {@link Files#newOutputStream(Path, OpenOption...)}
+     * @param image файл картинки
+     * @param filePath путь к файлу на сервере
+     * @throws IOException ошибка ввода - вывода
+     * @see Files#createDirectories(Path, FileAttribute[])
+     * @see Files#deleteIfExists(Path)
+     */
     static void uploadImage(MultipartFile image, Path filePath) throws IOException {
         Files.createDirectories(filePath.getParent());
         Files.deleteIfExists(filePath);
