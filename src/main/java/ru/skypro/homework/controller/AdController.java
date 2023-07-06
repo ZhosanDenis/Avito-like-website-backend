@@ -163,7 +163,7 @@ public class AdController {
             tags = "Объявления"
     )
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAdvertising(@PathVariable int id) {
+    public ResponseEntity<?> deleteAdvertising(@PathVariable int id) throws IOException {
         if (adService.deleteAdvertising(id)) {
             return ResponseEntity.ok().build();
         }

@@ -17,5 +17,5 @@ public interface AccountService {
 
     boolean updateUserAvatar(MultipartFile image) throws IOException;
 
-    void downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException;
+    boolean downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException;
 }
