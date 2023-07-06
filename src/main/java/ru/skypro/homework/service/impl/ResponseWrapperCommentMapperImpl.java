@@ -37,7 +37,7 @@ public class ResponseWrapperCommentMapperImpl implements ResponseWrapperCommentM
     public Comment toCommentDto(CommentEntity commentEntity) {
         Comment comment = new Comment();
         comment.setAuthor(commentEntity.getUserEntity().getId());
-        comment.setAuthorImage("/users/image/" + commentEntity.getUserEntity().getId() + "/download");
+        comment.setAuthorImage("/users/image/" + commentEntity.getUserEntity().getId());
         comment.setAuthorFirstName(commentEntity.getUserEntity().getFirstName());
         comment.setCreatedAt(commentEntity.getCreatedAt()
                 .atZone(ZoneId.systemDefault())

@@ -1,8 +1,11 @@
 package ru.skypro.homework.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -25,78 +28,93 @@ import java.nio.file.Path;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
+
+    private final UserDetailsManager manager;
 
     private final UserRepository userRepository;
 
     private final UserMapper userMapper;
 
-    private final PasswordEncoder encoder;
+    private final UserDetails userDetails;
 
     @Value("${users.avatar.dir.path}")
     private String avatarsDir;
 
     @Override
     @Transactional
-    public boolean updatePassword(NewPassword newPassword, String userName) {
-        UserEntity user = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
-        if (encoder.matches(newPassword.getCurrentPassword(), user.getPassword())) {
-            user.setPassword(encoder.encode(newPassword.getNewPassword()));
-            userRepository.save(user);
+    public boolean updatePassword(NewPassword newPassword) {
+        if (newPassword != null &&
+                newPassword.getNewPassword() != null &&
+                !newPassword.getNewPassword().isEmpty() &&
+                !newPassword.getNewPassword().isBlank()) {
+            manager.changePassword(newPassword.getCurrentPassword(), newPassword.getNewPassword());
+            log.info("Password was changed for user " + userDetails.getUsername());
             return true;
         }
+        log.warn("New password for user " + userDetails.getUsername() + " is incorrect");
         return false;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public User getUserInfo(String userName) {
+    public User getUserInfo() {
+        String userName = userDetails.getUsername();
+        log.info("Information was received for user " + userName);
         return userMapper.toUser(
-                userRepository.findByEmail(userName)
-                        .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"))
+                (userRepository.findByEmail(userName))
+                        .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"))
         );
     }
 
     @Override
     @Transactional
-    public User patchUserInfo(User user, String userName) {
+    public User patchUserInfo(User user) {
+        String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
-        return userMapper.toUser(
-                userRepository.save(
-                        userMapper.updateUserEntity(userEntity, user)
-                )
-        );
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        UserEntity updatedUser = userRepository.save(userMapper.updateUserEntity(userEntity, user));
+        log.info("Information was updated for user " + userName);
+        return userMapper.toUser(updatedUser);
     }
 
     @Override
     @Transactional
-    public boolean updateUserAvatar(String userName, MultipartFile image) throws IOException {
-        UserEntity user = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
-        Path filePath = Path.of(avatarsDir, user.getId() + "."
+    public boolean updateUserAvatar(MultipartFile image) throws IOException {
+        String userName = userDetails.getUsername();
+        UserEntity userEntity = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        if (userEntity.getImagePath() != null) {
+            Files.deleteIfExists(Path.of(userEntity.getImagePath()));
+        }
+        Path filePath = Path.of(avatarsDir, userEntity.getId() + "."
                 + StringUtils.getFilenameExtension(image.getOriginalFilename()));
         uploadImage(image, filePath);
-        user.setImagePath(filePath.getParent().toString());
-        user.setImageMediaType(image.getContentType());
-        user.setImageFileSize(image.getSize());
-        userRepository.save(user);
+        userEntity.setImagePath(filePath.toAbsolutePath().toString());
+        userEntity.setImageMediaType(image.getContentType());
+        userEntity.setImageFileSize(image.getSize());
+        log.info("Avatar was updated for user " + userName);
         return true;
     }
 
     @Override
     @Transactional
-    public void downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException {
+    public boolean downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException {
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
-        findAndDownloadImage(response,
-                user.getImagePath(),
-                user.getImageMediaType(),
-                user.getImageFileSize());
+        if (user.getImagePath() != null) {
+            findAndDownloadImage(response,
+                    user.getImagePath(),
+                    user.getImageMediaType(),
+                    user.getImageFileSize());
+            log.info("The method was called to download avatar for user " + user.getEmail());
+            return true;
+        }
+        return false;
     }
 
     static void findAndDownloadImage(HttpServletResponse response,

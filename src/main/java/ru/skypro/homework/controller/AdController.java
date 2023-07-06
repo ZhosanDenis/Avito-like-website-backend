@@ -7,9 +7,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.ads.Ads;
@@ -48,10 +48,8 @@ public class AdController {
     )
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Ads> addAdvertising(@RequestPart CreateAds properties,
-                                              @RequestPart MultipartFile image,
-                                              Authentication authentication) throws IOException {
-        String userName = authentication.getName();
-        return ResponseEntity.ok(adService.addAdvertising(properties, image, userName));
+                                              @RequestPart MultipartFile image) throws IOException {
+        return ResponseEntity.ok(adService.addAdvertising(properties, image));
     }
 
     @Operation(
@@ -103,9 +101,8 @@ public class AdController {
             tags = "Объявления"
     )
     @GetMapping("/me")
-    public ResponseEntity<ResponseWrapperAds> getAllMyAdvertising(Authentication authentication) {
-        String userName = authentication.getName();
-        return ResponseEntity.ok(adService.getAllMyAdvertising(userName));
+    public ResponseEntity<ResponseWrapperAds> getAllMyAdvertising() {
+        return ResponseEntity.ok(adService.getAllMyAdvertising());
     }
 
     @Operation(
@@ -125,7 +122,11 @@ public class AdController {
     @PatchMapping("/{id}")
     public ResponseEntity<Ads> updateAdvertising(@PathVariable int id,
                                                  @RequestBody CreateAds createAds) {
-        return ResponseEntity.ok(adService.updateAdvertising(id, createAds));
+        Ads updatedAds = adService.updateAdvertising(id, createAds);
+        if (updatedAds != null) {
+            return ResponseEntity.ok(updatedAds);
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @Operation(
@@ -145,8 +146,10 @@ public class AdController {
     @PatchMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateAdvertisingImage(@PathVariable int id,
                                                     @RequestParam MultipartFile image) throws IOException {
-        adService.updateAdvertisingImage(id, image);
-        return ResponseEntity.ok().build();
+        if (adService.updateAdvertisingImage(id, image)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
 
@@ -160,9 +163,11 @@ public class AdController {
             tags = "Объявления"
     )
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAdvertising(@PathVariable int id) {
-        adService.deleteAdvertising(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> deleteAdvertising(@PathVariable int id) throws IOException {
+        if (adService.deleteAdvertising(id)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @Operation(
@@ -181,10 +186,8 @@ public class AdController {
     @PostMapping("/{id}/comments")
     public ResponseEntity<Comment> addComment(
             @PathVariable(name = "id") Integer id,
-            @RequestBody CreateComment createComment,
-            Authentication authentication) {
-        String userName = authentication.getName();
-        return ResponseEntity.ok(adService.addComment(id, createComment, userName));
+            @RequestBody CreateComment createComment) {
+        return ResponseEntity.ok(adService.addComment(id, createComment));
     }
 
     @Operation(
@@ -225,7 +228,11 @@ public class AdController {
             @PathVariable(name = "adId") Integer adId,
             @PathVariable(name = "commentId") Integer commentId,
             @RequestBody CreateComment createComment) {
-        return ResponseEntity.ok(adService.updateComment(adId, commentId, createComment));
+        Comment comment = adService.updateComment(adId, commentId, createComment);
+        if (comment != null) {
+            return ResponseEntity.ok(comment);
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @Operation(
@@ -241,8 +248,10 @@ public class AdController {
     public ResponseEntity<?> deleteComment(
             @PathVariable(name = "adId") Integer adId,
             @PathVariable(name = "commentId") Integer commentId) {
-        adService.deleteComment(adId, commentId);
-        return ResponseEntity.ok().build();
+        if (adService.deleteComment(adId, commentId)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @Operation(
@@ -254,7 +263,7 @@ public class AdController {
         return ResponseEntity.ok(adService.findByTitle(title));
     }
 
-    @GetMapping(value = "/image/{adId}/download")
+    @GetMapping(value = "/image/{adId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     public void downloadAdImageFromFS(@PathVariable int adId, HttpServletResponse response) throws IOException {
         adService.downloadAdImageFromFS(adId, response);
     }
