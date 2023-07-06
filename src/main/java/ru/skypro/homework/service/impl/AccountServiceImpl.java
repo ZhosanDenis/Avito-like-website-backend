@@ -47,12 +47,15 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public boolean updatePassword(NewPassword newPassword) {
-        if (userDetails != null) {
+        if (newPassword != null &&
+                newPassword.getNewPassword() != null &&
+                !newPassword.getNewPassword().isEmpty() &&
+                !newPassword.getNewPassword().isBlank()) {
             manager.changePassword(newPassword.getCurrentPassword(), newPassword.getNewPassword());
             log.info("Password was changed for user " + userDetails.getUsername());
             return true;
         }
-        log.warn("User does not exist");
+        log.warn("New password for user " + userDetails.getUsername() + " is incorrect");
         return false;
     }
 
@@ -84,6 +87,9 @@ public class AccountServiceImpl implements AccountService {
         String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        if (userEntity.getImagePath() != null) {
+            Files.deleteIfExists(Path.of(userEntity.getImagePath()));
+        }
         Path filePath = Path.of(avatarsDir, userEntity.getId() + "."
                 + StringUtils.getFilenameExtension(image.getOriginalFilename()));
         uploadImage(image, filePath);
@@ -96,15 +102,19 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public void downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException {
+    public boolean downloadAvatarFromFS(int userId, HttpServletResponse response) throws IOException {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
-        findAndDownloadImage(response,
-                user.getImagePath(),
-                user.getImageMediaType(),
-                user.getImageFileSize());
-        log.info("The method was called to download avatar for user " + user.getEmail());
+        if (user.getImagePath() != null) {
+            findAndDownloadImage(response,
+                    user.getImagePath(),
+                    user.getImageMediaType(),
+                    user.getImageFileSize());
+            log.info("The method was called to download avatar for user " + user.getEmail());
+            return true;
+        }
+        return false;
     }
 
     static void findAndDownloadImage(HttpServletResponse response,

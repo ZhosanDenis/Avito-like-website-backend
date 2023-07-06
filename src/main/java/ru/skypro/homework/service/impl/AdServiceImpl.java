@@ -28,6 +28,7 @@ import ru.skypro.homework.service.ResponseWrapperCommentMapper;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -176,6 +177,9 @@ public class AdServiceImpl implements AdService {
     public boolean updateAdvertisingImage(int id, MultipartFile image) throws IOException {
         AdEntity adEntity = adRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Объявление не найдено"));
+        if (adEntity.getImagePath() != null) {
+            Files.deleteIfExists(Path.of(adEntity.getImagePath()));
+        }
         Path filePath = createPath(image, adEntity);
         adEntity.setImagePath(filePath.toAbsolutePath().toString());
         adEntity.setImageMediaType(image.getContentType());
@@ -186,7 +190,7 @@ public class AdServiceImpl implements AdService {
 
     @Override
     @Transactional
-    public boolean deleteAdvertising(int id) {
+    public boolean deleteAdvertising(int id) throws IOException {
         String userName = userDetails.getUsername();
         UserEntity userEntity = userRepository.findByEmail(userName)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
@@ -195,6 +199,7 @@ public class AdServiceImpl implements AdService {
         if (userCanChangeAdvertising(userEntity, adEntity)) {
             commentRepository.deleteAllByAdEntity_Id(id);
             adRepository.deleteById(id);
+            Files.deleteIfExists(Path.of(adEntity.getImagePath()));
             return true;
         }
         return false;

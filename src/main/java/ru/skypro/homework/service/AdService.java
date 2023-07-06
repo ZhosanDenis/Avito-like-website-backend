@@ -33,7 +33,7 @@ public interface AdService {
 
     boolean updateAdvertisingImage(int id, MultipartFile image) throws IOException;
 
-    boolean deleteAdvertising(int id);
+    boolean deleteAdvertising(int id) throws IOException;
 
     ResponseWrapperAds findByTitle(String title);
 

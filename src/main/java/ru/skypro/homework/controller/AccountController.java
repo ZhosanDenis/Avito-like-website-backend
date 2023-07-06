@@ -100,8 +100,11 @@ public class AccountController {
     }
 
     @GetMapping(value = "/image/{userId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
-    public void downloadUserAvatarFromFS(@PathVariable int userId, HttpServletResponse response) throws IOException {
-        accountService.downloadAvatarFromFS(userId, response);
+    public ResponseEntity<?> downloadUserAvatarFromFS(@PathVariable int userId, HttpServletResponse response) throws IOException {
+        if (accountService.downloadAvatarFromFS(userId, response)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @ExceptionHandler(value = IllegalArgumentException.class)
