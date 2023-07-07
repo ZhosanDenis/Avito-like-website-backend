@@ -31,6 +31,9 @@ import java.nio.file.attribute.FileAttribute;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
+/**
+ * Класс предназначен для осуществления операций с БД пользователей
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -183,7 +186,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
-     * Копирование данных из файла рисунка в ответа сервера. Входной поток получаем
+     * Копирование данных из файла рисунка в ответе сервера. Входной поток получаем
      * из метода {@link Files#newInputStream(Path, OpenOption...)}. Выходной поток
      * получаем из метода {@link HttpServletResponse#getOutputStream()}
      * @param response ответ сервера
