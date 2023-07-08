@@ -151,6 +151,7 @@ public class AccountServiceImpl implements AccountService {
         userEntity.setImagePath(filePath.toAbsolutePath().toString());
         userEntity.setImageMediaType(image.getContentType());
         userEntity.setImageFileSize(image.getSize());
+        userRepository.save(userEntity);
         log.info("Avatar was updated for user " + userName);
         return true;
     }
